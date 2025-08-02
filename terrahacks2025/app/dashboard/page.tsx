@@ -496,103 +496,87 @@ export default function DashboardPage() {
           {/* Dashboard Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Therapy Sessions Card */}
-            <div className="group">
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in">
+            <div className="group h-full">
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in h-full flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-pink-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-pink-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-300/10 to-red-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
-                
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+
+                <div className="relative z-10 flex flex-col h-full">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                     <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                  </div>
-                  
-                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-purple-600 transition-colors duration-300">
-                    Therapy Sessions
-                  </h4>
-                  <p className="text-black/70 mb-6">
-                    Start your AI-powered therapy sessions and track your progress
-                  </p>
-                  
-                  <div className="inline-flex items-center justify-center w-full text-purple-600 font-semibold group-hover:text-purple-700 transition-colors duration-300">
+                </div>
+
+                <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-purple-600 transition-colors duration-300">Therapy Sessions</h4>
+                <p className="text-black/70 mb-6">Start your AI-powered therapy sessions and track your progress</p>
+
+                <div className="inline-flex items-center justify-center w-full text-purple-600 font-semibold group-hover:text-purple-700 transition-colors duration-300 mt-auto">
                     Start Session
                     <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
-                  </div>
                 </div>
-              </div>
+                </div>
+            </div>
             </div>
 
             {/* Planning Card */}
-            <div className="group">
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed">
+            <div className="group h-full">
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed h-full flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-300/10 to-indigo-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
-                
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+
+                <div className="relative z-10 flex flex-col h-full">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                     <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                  </div>
-                  
-                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-blue-600 transition-colors duration-300">
-                    Planning
-                  </h4>
-                  <p className="text-black/70 mb-6">
-                    View your personalized exercise schedule and upcoming therapy sessions
-                  </p>
-                  
-                  <div className="inline-flex items-center justify-center w-full text-blue-600 font-semibold group-hover:text-blue-700 transition-colors duration-300">
+                </div>
+
+                <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-blue-600 transition-colors duration-300">Planning</h4>
+                <p className="text-black/70 mb-6">View your personalized exercise schedule and upcoming therapy sessions</p>
+
+                <div className="inline-flex items-center justify-center w-full text-blue-600 font-semibold group-hover:text-blue-700 transition-colors duration-300 mt-auto">
                     View Schedule
                     <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
-                  </div>
                 </div>
-              </div>
+                </div>
+            </div>
             </div>
 
             {/* Ailments Card */}
-            <div className="group">
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed-2">
+            <div className="group h-full">
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed-2 h-full flex flex-col">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-purple-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-300/10 to-pink-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
-                
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+
+                <div className="relative z-10 flex flex-col h-full">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                     <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
-                  </div>
-                  
-                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-indigo-600 transition-colors duration-300">
-                    Ailments
-                  </h4>
-                  <p className="text-black/70 mb-6">
-                    Track your symptoms and get personalized treatment recommendations
-                  </p>
-                  
-                  <Link
+                </div>
+
+                <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-indigo-600 transition-colors duration-300">Ailments</h4>
+                <p className="text-black/70 mb-6">Track your symptoms and get personalized treatment recommendations</p>
+
+                <Link
                     href="/ailments"
-                    className="inline-flex items-center justify-center w-full text-indigo-600 font-semibold group-hover:text-indigo-700 transition-colors duration-300"
-                    >
+                    className="inline-flex items-center justify-center w-full text-indigo-600 font-semibold group-hover:text-indigo-700 transition-colors duration-300 mt-auto"
+                >
                     Manage Ailments
                     <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
-                  </Link>
-
+                </Link>
                 </div>
-              </div>
+            </div>
             </div>
           </div>
 
