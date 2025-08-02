@@ -169,16 +169,16 @@ export default function DashboardPage() {
         </select>
       </label>
 
-      <label className="grid gap-1">
+      {/* <label className="grid gap-1">
         <span className="text-sm">Where do you feel pain or discomfort?</span>
         <input
           name="pain_area"
           className="border rounded p-2"
           placeholder="e.g., shoulder, knee, lower back"
         />
-      </label>
+      </label> */}
 
-      <label className="grid gap-1">
+      {/* <label className="grid gap-1">
         <span className="text-sm">Pain Level (1–10, where 10 is severe)</span>
 
         <input
@@ -193,29 +193,29 @@ export default function DashboardPage() {
             const out = e.currentTarget.nextElementSibling as HTMLElement | null;
             out?.querySelector(".curr")?.replaceChildren(val);
           }}
-        />
+        /> */}
 
-        <div className="flex justify-between text-xs text-gray-600">
+        {/* <div className="flex justify-between text-xs text-gray-600">
           <span>1 (Mild)</span>
           <span>
             Current: <strong className="curr">5</strong>
           </span>
           <span>10 (Severe)</span>
         </div>
-      </label>
+      </label> */}
 
 
       <label className="grid gap-1">
         <span className="text-sm">Fitness Level</span>
         <select name="fitness_level" className="border rounded p-2">
           <option value="">Select…</option>
-          <option>Beginner</option>
-          <option>Intermediate</option>
-          <option>Advanced</option>
+          <option>BEGINNER</option>
+          <option>INTERMEDIATE</option>
+          <option>ADVANCED</option>
         </select>
       </label>
 
-      <label className="grid gap-1">
+      {/* <label className="grid gap-1">
         <span className="text-sm">Medical History (Optional)</span>
         <textarea
           name="medical_history"
@@ -223,7 +223,7 @@ export default function DashboardPage() {
           placeholder="Any relevant conditions, surgeries, or injuries"
           rows={3}
         />
-      </label>
+      </label> */}
 
       <button type="submit" className="rounded p-2 border mt-2">Save profile</button>
     </form>
