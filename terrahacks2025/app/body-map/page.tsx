@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { ProfileService, UserProfile } from '@/service/ProfileService';
 
 interface BodyZone {
   id: string;
@@ -106,9 +108,37 @@ const bodyZones: BodyZone[] = [
 
 export default function BodyMapPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [selectedZones, setSelectedZones] = useState<BodyZone[]>([]);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [painLevels, setPainLevels] = useState<{[key: string]: number}>({});
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isGeneratingExercise, setIsGeneratingExercise] = useState(false);
+
+  // Fetch user profile on component mount
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login?next=/body-map');
+      return;
+    }
+
+    if (!loading && user?.email) {
+      (async () => {
+        try {
+          const result = await ProfileService.getProfileByEmail(user.email);
+          if (result) {
+            setProfile(result);
+          } else {
+            // Redirect to dashboard to complete profile setup
+            router.replace('/dashboard');
+          }
+        } catch (e: unknown) {
+          console.error('Failed to load profile:', e);
+          router.replace('/dashboard');
+        }
+      })();
+    }
+  }, [user, loading, router]);
 
   const toggleZone = (zone: BodyZone) => {
     if (selectedZones.find(z => z.id === zone.id)) {
@@ -126,6 +156,64 @@ export default function BodyMapPage() {
 
   const updatePainLevel = (zoneId: string, level: number) => {
     setPainLevels({ ...painLevels, [zoneId]: level });
+  };
+
+  // Handle body part selection and exercise generation
+  const handleGenerateExercise = async (zone: BodyZone) => {
+    if (!profile || !user) {
+      alert('User profile not found. Please complete your profile setup.');
+      return;
+    }
+
+    setIsGeneratingExercise(true);
+
+    try {
+      // Get pain level for this zone, default to 5 if not set
+      const painLevel = painLevels[zone.id] || 5;
+
+      // Prepare the request data for the exercise recommendation API
+      const requestData = {
+        height: profile.height_cm,
+        weight: profile.weight_kg,
+        age: profile.age,
+        gender: profile.gender || 'other',
+        painLocation: zone.name,
+        painLevel: painLevel,
+        fitnessLevel: profile.fitness_level || 'beginner',
+        medicalHistory: `Pain in ${zone.name}. Common patterns: ${zone.painPatterns.join(', ')}`,
+        currentLimitations: `Affected area: ${zone.description}`
+      };
+
+      // Call the exercise recommendation API
+      const response = await fetch('/api/exercise-recommendation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate exercise recommendation');
+      }
+
+      const apiResponse = await response.json();
+      console.log('Body-map: API response received:', apiResponse);
+      
+      // Extract the actual exercise data from the API response
+      const exerciseData = apiResponse.success ? apiResponse.data : apiResponse;
+      console.log('Body-map: Exercise data to store:', exerciseData);
+
+      // Store the exercise data in sessionStorage and navigate to physio coach
+      sessionStorage.setItem('generatedExercise', JSON.stringify(exerciseData));
+      router.push('/physio-coach');
+
+    } catch (error) {
+      console.error('Error generating exercise:', error);
+      alert('Failed to generate exercise recommendation. Please try again.');
+    } finally {
+      setIsGeneratingExercise(false);
+    }
   };
 
   return (
@@ -564,6 +652,29 @@ export default function BodyMapPage() {
                                 </li>
                               ))}
                             </ul>
+                          </div>
+                          
+                          {/* Generate Exercise Button */}
+                          <div className="pt-4 border-t border-gray-200">
+                            <button
+                              onClick={() => handleGenerateExercise(zone)}
+                              disabled={isGeneratingExercise}
+                              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-3 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+                            >
+                              {isGeneratingExercise ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                  Generating Exercise...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                  </svg>
+                                  Generate Exercise
+                                </>
+                              )}
+                            </button>
                           </div>
                         </div>
                       </div>
