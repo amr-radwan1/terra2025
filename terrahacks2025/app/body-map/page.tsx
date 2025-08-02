@@ -140,34 +140,17 @@ export default function BodyMapPage() {
       </div>
 
       <div className="relative z-10 min-h-screen">
-        {/* Enhanced Header */}
-        <header className="bg-white/90 backdrop-blur-xl border-b border-white/20 shadow-lg">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <Link href="/" className="group">
-                <div className="relative">
-                  <h1 className="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
-                    Freesio
-                  </h1>
-                  <h2 className="text-xl font-black text-black group-hover:scale-105 transition-transform duration-300">
-                    Therapist
-                  </h2>
-                  <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
-                </div>
-              </Link>
-              
-              <Link href="/dashboard" className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span>Dashboard</span>
-              </Link>
-            </div>
-          </div>
-        </header>
-
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-6 py-8">
+          {/* Return to Ailments Button */}
+          <div className="flex justify-end mb-6">
+            <Link href="/ailments" className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>Return to Ailments</span>
+            </Link>
+          </div>
           <div className="text-center mb-12 animate-fade-in-up">
             <h3 className="text-5xl font-bold text-black mb-4">Interactive Body Assessment</h3>
             <div className="w-32 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mb-4"></div>
