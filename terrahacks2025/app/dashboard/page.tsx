@@ -72,37 +72,13 @@ export default function DashboardPage() {
           return;
         }
 
-        // convert to DB units
-        const height_mm = Math.round(heightCm * 10);       // cm -> mm
-        const weight_grams = Math.round(weightKg * 1000);  // kg -> g
 
-        try {
-          // update core fields + mark setup complete
-          await ProfileService.setupProfile(
-            user!.email!,
-            name,
-            height_mm,
-            weight_grams,
-            age
-          );
+        try{
+            ProfileService.setupProfile(user.email,name,heightCm,weightKg,age,gender,fitness_level);
 
-          // update extra fields (assumes these columns exist)
-          await supabase
-            .from("user_profiles")
-            .update({ gender, pain_area, pain_level, fitness_level, medical_history })
-            .eq("email", user!.email!);
-
-          // flip UI to "completed"
-          setProfile({
-            email: user!.email!,
-            name,
-            height_mm,
-            weight_grams,
-            age,
-            bio_setup: true,
-          });
-        } catch (err: any) {
-          window.alert(err?.message || "Failed to save profile.");
+        }catch(error){
+            console.error("There was an error adding in Form: ",error)
+            throw error;
         }
       }}
     >
