@@ -16,11 +16,11 @@ export default function DashboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-                  const [editFormData, setEditFormData] = useState({
-                  age: '',
-                  heightM: '',
-                  weightKg: ''
-                });
+  const [editFormData, setEditFormData] = useState({
+    age: '',
+    heightCm: '',
+    weightKg: ''
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -54,7 +54,7 @@ export default function DashboardPage() {
     if (profile) {
       setEditFormData({
         age: profile.age?.toString() || '',
-        heightM: profile.height_m ? profile.height_m.toString() : '',
+        heightCm: profile.height_cm ? profile.height_cm.toString() : '',
         weightKg: profile.weight_kg ? profile.weight_kg.toString() : ''
       });
     }
@@ -164,20 +164,28 @@ export default function DashboardPage() {
                     const fd = new FormData(e.currentTarget as HTMLFormElement);
 
                     const name = String(fd.get("name") || "").trim();
-                    const heightM = Number(fd.get("heightM"));
+                    const heightCm = Number(fd.get("heightCm"));
                     const weightKg = Number(fd.get("weightKg"));
                     const age = Number(fd.get("age"));
                     const gender = String(fd.get("gender") || "");
                     const fitness_level = String(fd.get("fitness_level") || "");
 
-                    if (!name || !heightM || !weightKg || !age) {
+                    if (!name || !heightCm || !weightKg || !age) {
                       window.alert("Please fill all required fields.");
                       setIsSubmitting(false);
                       return;
                     }
 
                     try {
-                                              await ProfileService.setupProfile(user.email, name, heightM * 100, weightKg, age, gender, fitness_level);
+                      await ProfileService.setupProfile(
+                        user.email,
+                        name,
+                        heightCm,   // cm
+                        weightKg,   // kg
+                        age,
+                        gender,
+                        fitness_level
+                      );
                       // Refresh the page to show the updated profile
                       window.location.reload();
                     } catch (error) {
@@ -210,21 +218,21 @@ export default function DashboardPage() {
                   {/* Height and Weight Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label htmlFor="heightM" className="block text-sm font-semibold text-black">
-                        Height (m)
+                      <label htmlFor="heightCm" className="block text-sm font-semibold text-black">
+                        Height (cm)
                       </label>
                       <div className="relative group">
                         <input
-                          id="heightM"
-                          name="heightM"
+                          id="heightCm"
+                          name="heightCm"
                           type="number"
-                          step="0.01"
-                          min="0.5"
-                          max="2.5"
+                          step="1"
+                          min="50"
+                          max="250"
                           required
                           className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-black placeholder-gray-500 bg-white/50 backdrop-blur-sm group-hover:border-blue-300 group-hover:bg-white/70"
-                          defaultValue={profile?.height_m ? profile.height_m : ""}
-                          placeholder="e.g., 1.75"
+                          defaultValue={profile?.height_cm ? profile.height_cm : ""}
+                          placeholder="e.g., 175"
                         />
                         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300 pointer-events-none"></div>
                       </div>
@@ -560,7 +568,7 @@ export default function DashboardPage() {
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-300/10 to-pink-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
                 
                 <div className="relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                     <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
@@ -629,16 +637,15 @@ export default function DashboardPage() {
                           if (profile) {
                             setProfile({
                               ...profile,
-                              age: age,
-                              height_m: heightM,
-                              weight_kg: weightKg
+                              age: Number(editFormData.age),
+                              height_cm: Number(editFormData.heightCm),
+                              weight_kg: Number(editFormData.weightKg)
                             });
                           }
                           
                           setIsEditingProfile(false);
                         } catch (error) {
                           console.error('Error updating profile:', error);
-                          // Show more detailed error information
                           const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
                           alert(`Failed to update profile: ${errorMessage}`);
                         } finally {
@@ -669,7 +676,7 @@ export default function DashboardPage() {
                         if (profile) {
                           setEditFormData({
                             age: profile.age?.toString() || '',
-                            heightM: profile.height_m ? profile.height_m.toString() : '',
+                            heightCm: profile.height_cm ? profile.height_cm.toString() : '',
                             weightKg: profile.weight_kg ? profile.weight_kg.toString() : ''
                           });
                         }
@@ -684,85 +691,86 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-                              <div className="grid md:grid-cols-4 gap-6">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <p className="text-black/60 text-sm">Name</p>
-                    <p className="text-black font-semibold">{profile.name}</p>
+
+              <div className="grid md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
                   </div>
-                  
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                    <p className="text-black/60 text-sm">Age</p>
-                    {isEditingProfile ? (
-                      <input
-                        type="number"
-                        value={editFormData.age}
-                        onChange={(e) => setEditFormData({...editFormData, age: e.target.value})}
-                        className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
-                        placeholder="Age"
-                        min="1"
-                        max="120"
-                      />
-                    ) : (
-                      <p className="text-black font-semibold">{profile.age} years</p>
-                    )}
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                    </div>
-                    <p className="text-black/60 text-sm">Height</p>
-                    {isEditingProfile ? (
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={editFormData.heightM}
-                        onChange={(e) => setEditFormData({...editFormData, heightM: e.target.value})}
-                        className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
-                        placeholder="Height (m)"
-                        min="0.5"
-                        max="2.5"
-                      />
-                    ) : (
-                      <p className="text-black font-semibold">{profile.height_m} m</p>
-                    )}
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                      </svg>
-                    </div>
-                    <p className="text-black/60 text-sm">Weight</p>
-                    {isEditingProfile ? (
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={editFormData.weightKg}
-                        onChange={(e) => setEditFormData({...editFormData, weightKg: e.target.value})}
-                        className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
-                        placeholder="Weight (kg)"
-                        min="20"
-                        max="300"
-                      />
-                    ) : (
-                      <p className="text-black font-semibold">{profile.weight_kg} kg</p>
-                    )}
-                  </div>
+                  <p className="text-black/60 text-sm">Name</p>
+                  <p className="text-black font-semibold">{profile.name}</p>
                 </div>
+                
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <p className="text-black/60 text-sm">Age</p>
+                  {isEditingProfile ? (
+                    <input
+                      type="number"
+                      value={editFormData.age}
+                      onChange={(e) => setEditFormData({...editFormData, age: e.target.value})}
+                      className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
+                      placeholder="Age"
+                      min="1"
+                      max="120"
+                    />
+                  ) : (
+                    <p className="text-black font-semibold">{profile.age} years</p>
+                  )}
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <p className="text-black/60 text-sm">Height</p>
+                  {isEditingProfile ? (
+                    <input
+                      type="number"
+                      step="1"
+                      value={editFormData.heightCm}
+                      onChange={(e) => setEditFormData({...editFormData, heightCm: e.target.value})}
+                      className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
+                      placeholder="Height (cm)"
+                      min="50"
+                      max="250"
+                    />
+                  ) : (
+                    <p className="text-black font-semibold">{profile.height_cm} cm</p>
+                  )}
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                    </svg>
+                  </div>
+                  <p className="text-black/60 text-sm">Weight</p>
+                  {isEditingProfile ? (
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={editFormData.weightKg}
+                      onChange={(e) => setEditFormData({...editFormData, weightKg: e.target.value})}
+                      className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
+                      placeholder="Weight (kg)"
+                      min="20"
+                      max="300"
+                    />
+                  ) : (
+                    <p className="text-black font-semibold">{profile.weight_kg} kg</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </main>
