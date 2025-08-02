@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { ProfileService, MedicalCondition } from "@/service/ProfileService";
+import { ProfileService, MedicalCondition, UserProfile } from "@/service/ProfileService";
 
 export default function AilmentsPage() {
   const router = useRouter();
@@ -13,6 +13,9 @@ export default function AilmentsPage() {
   const [items, setItems] = useState<MedicalCondition[]>([]);
   const [fetching, setFetching] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [fetchingProfile, setFetchingProfile] = useState(false);
 
   const [activeId, setActiveId] = useState<number | null>(null);
   const active = useMemo(
@@ -64,6 +67,25 @@ export default function AilmentsPage() {
   useEffect(() => {
     if (!loading && user?.email) {
       loadAilments(user.email);
+      
+      // Load user profile
+      (async () => {
+        setFetchingProfile(true);
+        setProfileError(null);
+        try {
+          const result = await ProfileService.getProfileByEmail(user.email);
+          if (result) {
+            setProfile(result);
+          } else {
+            setProfileError('Profile not found');
+          }
+        } catch (e: unknown) {
+          const errorMessage = e instanceof Error ? e.message : 'Failed to load profile';
+          setProfileError(errorMessage);
+        } finally {
+          setFetchingProfile(false);
+        }
+      })();
     }
   }, [loading, user]);
 
@@ -155,12 +177,12 @@ export default function AilmentsPage() {
     }
   };
 
-  if (loading || fetching) {
+  if (loading || fetching || fetchingProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-800 mx-auto"></div>
-          <p className="mt-4 text-black">Loading ailments...</p>
+          <p className="mt-4 text-black">Loading...</p>
         </div>
       </div>
     );
@@ -181,12 +203,30 @@ export default function AilmentsPage() {
               <h2 className="text-xl font-black text-black">Therapist</h2>
             </div>
           </Link>
-          <Link
-            href="/dashboard"
-            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold hover:from-blue-600 hover:to-indigo-600 transition"
-          >
-            Back to Dashboard
-          </Link>
+          
+          <div className="flex items-center space-x-6">
+            <Link
+              href="/dashboard"
+              className="px-4 py-2 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold hover:from-blue-600 hover:to-indigo-600 transition"
+            >
+              Back to Dashboard
+            </Link>
+            
+            {/* User Welcome Section */}
+            {profile && (
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <p className="text-black font-semibold">Welcome back,</p>
+                  <p className="text-black/80 text-sm">{profile.name}</p>
+                </div>
+                
+                {/* User Avatar */}
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-sm">{profile.name.charAt(0).toUpperCase()}</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

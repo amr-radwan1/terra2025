@@ -3,7 +3,7 @@ import { supabase } from "@/supabase/client"
 export type UserProfile = {
   email: string;
   name: string;
-  height_m: number;
+  height_cm: number;
   weight_kg: number;
   age: number;
   bio_setup: boolean;
@@ -29,14 +29,6 @@ export const ProfileService = {
             .maybeSingle();
         if (error){
             throw error;
-        }
-        
-        // Convert height from cm to meters for the frontend
-        if (data) {
-            return {
-                ...data,
-                height_m: data.height_cm / 100
-            };
         }
         
         return data;
@@ -72,12 +64,12 @@ export const ProfileService = {
         }
     },
 
-    async updateProfileFields(email: string, height_m: number, weight_kg: number, age: number) {
+    async updateProfileFields(email: string, height_cm: number, weight_kg: number, age: number) {
         try {
             const { data, error } = await supabase
                 .from('user_profiles')
                 .update({
-                    height_cm: height_m * 100, // Convert meters to cm for database
+                    height_cm: height_cm, // Convert meters to cm for database
                     weight_kg: weight_kg,
                     age: age
                 })
