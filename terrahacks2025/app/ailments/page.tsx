@@ -42,6 +42,7 @@ export default function AilmentsPage() {
     description: "",
     pain_level: 1,
   });
+  const [showAddForm, setShowAddForm] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -446,12 +447,18 @@ export default function AilmentsPage() {
       {/* --- NEW: Add Modal --- */}
       {addOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setAddOpen(false)}></div>
+          <div className="absolute inset-0 bg-black/40" onClick={() => {
+            setAddOpen(false);
+            setShowAddForm(false);
+          }}></div>
           <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 w-full max-w-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h5 className="text-2xl font-bold text-black">Add Ailment</h5>
               <button
-                onClick={() => setAddOpen(false)}
+                onClick={() => {
+                  setAddOpen(false);
+                  setShowAddForm(false);
+                }}
                 className="p-2 rounded-xl hover:bg-gray-100"
                 aria-label="Close"
               >
@@ -459,91 +466,127 @@ export default function AilmentsPage() {
               </button>
             </div>
 
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                onAdd();
-              }}
-            >
-              <div className="flex items-center space-x-2">
-                <input
-                  id="addIsPhysical"
-                  type="checkbox"
-                  checked={addForm.is_physio}
-                  onChange={(e) =>
-                    setAddForm({ ...addForm, is_physio: e.target.checked })
-                  }
-                  className="h-4 w-4"
-                />
-                <label htmlFor="addIsPhysical" className="text-black">
-                  Physical ailment
-                </label>
+            {!showAddForm ? (
+              // Choice Modal
+              <div className="space-y-6">
+                <p className="text-black/80 text-center mb-6">
+                  Choose how you'd like to add your ailment:
+                </p>
+                
+                <div className="space-y-4">
+                  <button
+                    onClick={() => router.push('/body-map')}
+                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  >
+                    <div className="flex items-center justify-center space-x-3">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
+                      </svg>
+                      <span>Map on Body</span>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  >
+                    <div className="flex items-center justify-center space-x-3">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span>Fill Form</span>
+                    </div>
+                  </button>
+                </div>
               </div>
+            ) : (
+              // Form Modal
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  onAdd();
+                }}
+              >
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="addIsPhysical"
+                    type="checkbox"
+                    checked={addForm.is_physio}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, is_physio: e.target.checked })
+                    }
+                    className="h-4 w-4"
+                  />
+                  <label htmlFor="addIsPhysical" className="text-black">
+                    Physical ailment
+                  </label>
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-black mb-1">
-                  Where is the pain?
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none bg-white/70 text-black"
-                  value={addForm.location_on_body}
-                  onChange={(e) =>
-                    setAddForm({ ...addForm, location_on_body: e.target.value })
-                  }
-                  placeholder="e.g., Left knee"
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-1">
+                    Where is the pain?
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none bg-white/70 text-black"
+                    value={addForm.location_on_body}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, location_on_body: e.target.value })
+                    }
+                    placeholder="e.g., Left knee"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-black mb-1">
-                  Description
-                </label>
-                <textarea
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none bg-white/70 text-black"
-                  rows={4}
-                  value={addForm.description}
-                  onChange={(e) =>
-                    setAddForm({ ...addForm, description: e.target.value })
-                  }
-                  placeholder="Describe the pain, when it occurs, etc."
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none bg-white/70 text-black"
+                    rows={4}
+                    value={addForm.description}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, description: e.target.value })
+                    }
+                    placeholder="Describe the pain, when it occurs, etc."
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-black mb-1">
-                  Severity (1–10)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={addForm.pain_level}
-                  onChange={(e) =>
-                    setAddForm({ ...addForm, pain_level: Number(e.target.value) })
-                  }
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none bg-white/70 text-black"
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-1">
+                    Severity (1–10)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={addForm.pain_level}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, pain_level: Number(e.target.value) })
+                    }
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none bg-white/70 text-black"
+                  />
+                </div>
 
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAddOpen(false)}
-                  className="px-4 py-2 rounded-2xl bg-gray-200 text-black font-semibold hover:bg-gray-300 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={adding}
-                  className="px-4 py-2 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold hover:from-green-600 hover:to-emerald-700 transition disabled:opacity-60"
-                >
-                  {adding ? "Adding..." : "Add"}
-                </button>
-              </div>
-            </form>
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddForm(false)}
+                    className="px-4 py-2 rounded-2xl bg-gray-200 text-black font-semibold hover:bg-gray-300 transition"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={adding}
+                    className="px-4 py-2 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold hover:from-green-600 hover:to-emerald-700 transition disabled:opacity-60"
+                  >
+                    {adding ? "Adding..." : "Add"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

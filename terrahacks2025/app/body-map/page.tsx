@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface BodyZone {
   id: string;
@@ -104,6 +105,7 @@ const bodyZones: BodyZone[] = [
 ];
 
 export default function BodyMapPage() {
+  const router = useRouter();
   const [selectedZones, setSelectedZones] = useState<BodyZone[]>([]);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [painLevels, setPainLevels] = useState<{[key: string]: number}>({});
@@ -497,14 +499,16 @@ export default function BodyMapPage() {
             <div className="lg:col-span-1">
               {selectedZones.length > 0 ? (
                 <div className="space-y-6">
-                  {/* Start Exercise Button - Top */}
+                  {/* Done Button - Top */}
                   <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl p-6 shadow-2xl border border-white/20 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-400/20"></div>
                     <div className="relative z-10 text-center">
-                      <h4 className="text-xl font-bold text-white mb-3">Ready to Start Treatment?</h4>
-                      <p className="text-white/90 mb-4">Based on your pain assessment, we'll create a personalized exercise program.</p>
-                      <button className="w-full bg-white/20 backdrop-blur-sm text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl border border-white/30">
-                        Start Exercise Program
+                      <h4 className="text-xl font-bold text-white mb-3">Based on your pain assessment, we'll create a personalized exercise program.</h4>
+                      <button 
+                        onClick={() => router.push('/ailments')}
+                        className="w-full bg-white/20 backdrop-blur-sm text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl border border-white/30"
+                      >
+                        Done
                       </button>
                     </div>
                   </div>
