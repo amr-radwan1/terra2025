@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ProfileService } from '@/service/ProfileService';
+import { supabase } from '@/supabase/client';
+
 
 interface BodyZone {
   id: string;
@@ -109,6 +112,7 @@ export default function BodyMapPage() {
   const [selectedZones, setSelectedZones] = useState<BodyZone[]>([]);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [painLevels, setPainLevels] = useState<{[key: string]: number}>({});
+  const [submitting, setSubmitting] = useState(false);
 
   const toggleZone = (zone: BodyZone) => {
     if (selectedZones.find(z => z.id === zone.id)) {
@@ -126,6 +130,46 @@ export default function BodyMapPage() {
 
   const updatePainLevel = (zoneId: string, level: number) => {
     setPainLevels({ ...painLevels, [zoneId]: level });
+  };
+
+    const handleDone = async () => {
+    if (selectedZones.length === 0 || submitting) return;
+
+    try {
+      setSubmitting(true);
+
+      // Get current user email
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw userErr;
+      const email = user?.email;
+      if (!email) throw new Error('No logged-in user. Please sign in again.');
+
+      // Create one record per selected zone
+      await Promise.all(
+        selectedZones.map((zone) => {
+          const description = zone.painPatterns.join(', '); // convert array to string
+          const location_on_body = zone.name;
+          const pain_level = painLevels[zone.id] ?? 5;
+          const is_physio = false; // set true/false based on your app context
+
+          return ProfileService.addMedicalCondition(
+            email,
+            is_physio,
+            location_on_body,
+            description,
+            pain_level
+          );
+        })
+      );
+
+      // Navigate after success
+      router.push('/ailments');
+    } catch (err) {
+      console.error('Failed to save medical conditions:', err);
+      alert('Could not save your selections. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -487,12 +531,14 @@ export default function BodyMapPage() {
                     <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-400/20"></div>
                     <div className="relative z-10 text-center">
                       <h4 className="text-xl font-bold text-white mb-3">Based on your pain assessment, we'll create a personalized exercise program.</h4>
-                      <button 
-                        onClick={() => router.push('/ailments')}
-                        className="w-full bg-white/20 backdrop-blur-sm text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl border border-white/30"
+                      <button
+                        onClick={handleDone}
+                        disabled={submitting}
+                        className="w-full bg-white/20 ... disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        Done
+                        {submitting ? 'Saving…' : 'Done'}
                       </button>
+
                     </div>
                   </div>
 

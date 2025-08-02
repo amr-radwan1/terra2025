@@ -377,7 +377,7 @@ export default function AilmentsPage() {
             {!editMode ? (
               <div className="space-y-3">
                 <div>
-                  <p className="text-black/60 text-sm">Physical</p>
+                  <p className="text-black/60 text-sm">From Physio Therapy</p>
                   <p className="text-black font-semibold">
                     {active.is_physio ? "Yes" : "No"}
                   </p>
