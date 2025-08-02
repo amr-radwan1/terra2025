@@ -13,7 +13,7 @@ export const ProfileService = {
     async getProfileByEmail(email: string): Promise<UserProfile | null>{
 
         const {data, error} = await supabase
-            .from<UserProfile>('user_profiles')
+            .from('user_profiles')
             .select('email, name, height_cm, weight_kg, age, bio_setup')    //DO NOT TAKE id for safetyish
             .eq('email', email)
             .maybeSingle();

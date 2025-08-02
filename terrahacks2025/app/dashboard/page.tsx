@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { ProfileService, UserProfile } from '@/service/ProfileService';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [fetchingProfile, setFetchingProfile] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -30,8 +32,9 @@ export default function DashboardPage() {
           } else {
             setProfileError('Profile not found');
           }
-        } catch (e: any) {
-          setProfileError(e.message || 'Failed to load profile');
+        } catch (e: unknown) {
+          const errorMessage = e instanceof Error ? e.message : 'Failed to load profile';
+          setProfileError(errorMessage);
         } finally {
           setFetchingProfile(false);
         }
@@ -39,178 +42,567 @@ export default function DashboardPage() {
     }
   }, [user, loading, router]);
 
-  if (loading) return <div>Loading auth...</div>;
-  if (!user) return null; // redirecting
-  if (fetchingProfile) return <div>Loading profile...</div>;
-
-  console.log(profile)
-    if (!profile?.bio_setup) {
+  if (loading) {
     return (
-  <div className="p-6">
-    <h1 className="text-xl font-bold">Welcome, {user.email}</h1>
-    {profileError && <p className="text-red-600 text-sm">Profile error: {profileError}</p>}
-
-    <form
-      className="grid gap-3 mt-4 max-w-md"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget as HTMLFormElement);
-
-        const name = String(fd.get("name") || "").trim();
-        const heightCm = Number(fd.get("heightCm"));
-        const weightKg = Number(fd.get("weightKg"));
-        const age = Number(fd.get("age"));
-
-        const gender = String(fd.get("gender") || "");
-        const pain_area = String(fd.get("pain_area") || "");
-        const pain_level = Number(fd.get("pain_level"));
-        const fitness_level = String(fd.get("fitness_level") || "");
-        const medical_history = String(fd.get("medical_history") || "");
-
-        if (!name || !heightCm || !weightKg || !age) {
-          window.alert("Please fill all required fields.");
-          return;
-        }
-
-
-        try{
-            ProfileService.setupProfile(user.email,name,heightCm,weightKg,age,gender,fitness_level);
-
-        }catch(error){
-            console.error("There was an error adding in Form: ",error)
-            throw error;
-        }
-      }}
-    >
-      {/* Basic fields */}
-      <label className="grid gap-1">
-        <span className="text-sm">Name</span>
-        <input
-          name="name"
-          className="border rounded p-2"
-          defaultValue={profile?.name ?? ""}
-          placeholder="Your name"
-          required
-        />
-      </label>
-
-      <div className="grid grid-cols-2 gap-3">
-        <label className="grid gap-1">
-          <span className="text-sm">Height (cm)</span>
-          <input
-            name="heightCm"
-            type="number"
-            step="any"
-            className="border rounded p-2"
-            defaultValue={profile?.height_cm ? profile.height_cm / 10 : ""}
-            placeholder="e.g., 175"
-            required
-          />
-        </label>
-        <label className="grid gap-1">
-          <span className="text-sm">Weight (kg)</span>
-          <input
-            name="weightKg"
-            type="number"
-            step="any"
-            className="border rounded p-2"
-            defaultValue={profile?.weight_kg ? profile.weight_kg / 1000 : ""}
-            placeholder="e.g., 70"
-            required
-          />
-        </label>
-      </div>
-
-      <label className="grid gap-1">
-        <span className="text-sm">Age</span>
-        <input
-          name="age"
-          type="number"
-          className="border rounded p-2"
-          defaultValue={profile?.age ?? ""}
-          placeholder="e.g., 21"
-          required
-        />
-      </label>
-
-      {/* Extra fields */}
-      <label className="grid gap-1">
-        <span className="text-sm">Gender</span>
-        <select name="gender" className="border rounded p-2">
-          <option value="">Select…</option>
-          <option>Male</option>
-          <option>Female</option>
-          <option>Non-binary</option>
-          <option>Prefer not to say</option>
-        </select>
-      </label>
-
-      {/* <label className="grid gap-1">
-        <span className="text-sm">Where do you feel pain or discomfort?</span>
-        <input
-          name="pain_area"
-          className="border rounded p-2"
-          placeholder="e.g., shoulder, knee, lower back"
-        />
-      </label> */}
-
-      {/* <label className="grid gap-1">
-        <span className="text-sm">Pain Level (1–10, where 10 is severe)</span>
-
-        <input
-          name="pain_level"
-          type="range"
-          min={1}
-          max={10}
-          defaultValue={5}
-          className="w-full"
-          onInput={(e) => {
-            const val = (e.currentTarget as HTMLInputElement).value;
-            const out = e.currentTarget.nextElementSibling as HTMLElement | null;
-            out?.querySelector(".curr")?.replaceChildren(val);
-          }}
-        /> */}
-
-        {/* <div className="flex justify-between text-xs text-gray-600">
-          <span>1 (Mild)</span>
-          <span>
-            Current: <strong className="curr">5</strong>
-          </span>
-          <span>10 (Severe)</span>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-800 mx-auto"></div>
+          <p className="mt-4 text-black">Loading...</p>
         </div>
-      </label> */}
-
-
-      <label className="grid gap-1">
-        <span className="text-sm">Fitness Level</span>
-        <select name="fitness_level" className="border rounded p-2">
-          <option value="">Select…</option>
-          <option>BEGINNER</option>
-          <option>INTERMEDIATE</option>
-          <option>ADVANCED</option>
-        </select>
-      </label>
-
-      {/* <label className="grid gap-1">
-        <span className="text-sm">Medical History (Optional)</span>
-        <textarea
-          name="medical_history"
-          className="border rounded p-2"
-          placeholder="Any relevant conditions, surgeries, or injuries"
-          rows={3}
-        />
-      </label> */}
-
-      <button type="submit" className="rounded p-2 border mt-2">Save profile</button>
-    </form>
-  </div>
-);
-
+      </div>
+    );
+  }
+  
+  if (!user) return null; // redirecting
+  
+  if (fetchingProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-800 mx-auto"></div>
+          <p className="mt-4 text-black">Loading your profile...</p>
+        </div>
+      </div>
+    );
   }
 
-    else {
-        return (
-            <div>Welcom Back {profile.name}! You have setup finished, you can now nav to bio data, and ailments</div>
-        );
-    }
+  console.log(profile)
+  
+  if (!profile?.bio_setup) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-blue-400/30 to-indigo-500/30 rounded-full blur-xl animate-float"></div>
+          <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-full blur-xl animate-float-delayed"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-blue-300/10 to-indigo-400/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        </div>
+
+        <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-12">
+          <div className="max-w-2xl w-full">
+            {/* Header */}
+            <div className="text-center mb-8 animate-fade-in-up">
+              <Link href="/" className="inline-block mb-8 group">
+                <div className="relative">
+                  <h1 className="text-5xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
+                    Freesio
+                  </h1>
+                  <h2 className="text-3xl font-black text-black group-hover:scale-105 transition-transform duration-300">
+                    Therapist
+                  </h2>
+                  <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+                </div>
+              </Link>
+              
+              <div className="space-y-3">
+                <h3 className="text-4xl font-bold text-black mb-2">Complete Your Profile</h3>
+                <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto"></div>
+                <p className="text-black/80 text-lg">Let's personalize your therapy experience</p>
+              </div>
+            </div>
+
+            {/* Profile Setup Form */}
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 relative overflow-hidden animate-fade-in-up-delayed">
+              {/* Card background gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/90 to-blue-50/50 rounded-3xl"></div>
+              
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/10 to-pink-500/10 rounded-full translate-y-12 -translate-x-12"></div>
+              
+              <div className="relative z-10">
+                <div className="mb-6">
+                  <h4 className="text-2xl font-bold text-black mb-2">Welcome, {user.email}</h4>
+                  {profileError && (
+                    <div className="bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl p-4 mb-4">
+                      <p className="text-red-600 text-sm">Profile error: {profileError}</p>
+                    </div>
+                  )}
+                </div>
+
+                <form
+                  className="space-y-6"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setIsSubmitting(true);
+                    const fd = new FormData(e.currentTarget as HTMLFormElement);
+
+                    const name = String(fd.get("name") || "").trim();
+                    const heightCm = Number(fd.get("heightCm"));
+                    const weightKg = Number(fd.get("weightKg"));
+                    const age = Number(fd.get("age"));
+                    const gender = String(fd.get("gender") || "");
+                    const fitness_level = String(fd.get("fitness_level") || "");
+
+                    if (!name || !heightCm || !weightKg || !age) {
+                      window.alert("Please fill all required fields.");
+                      setIsSubmitting(false);
+                      return;
+                    }
+
+                    try {
+                      await ProfileService.setupProfile(user.email, name, heightCm, weightKg, age, gender, fitness_level);
+                      // Refresh the page to show the updated profile
+                      window.location.reload();
+                    } catch (error) {
+                      console.error("There was an error adding in Form: ", error);
+                      window.alert("Failed to save profile. Please try again.");
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                >
+                  {/* Name Field */}
+                  <div className="space-y-2">
+                    <label htmlFor="name" className="block text-sm font-semibold text-black">
+                      Full Name
+                    </label>
+                    <div className="relative group">
+                      <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        required
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-black placeholder-gray-500 bg-white/50 backdrop-blur-sm group-hover:border-blue-300 group-hover:bg-white/70"
+                        defaultValue={profile?.name ?? ""}
+                        placeholder="Enter your full name"
+                      />
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300 pointer-events-none"></div>
+                    </div>
+                  </div>
+
+                  {/* Height and Weight Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label htmlFor="heightCm" className="block text-sm font-semibold text-black">
+                        Height (cm)
+                      </label>
+                      <div className="relative group">
+                        <input
+                          id="heightCm"
+                          name="heightCm"
+                          type="number"
+                          step="any"
+                          required
+                          className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-black placeholder-gray-500 bg-white/50 backdrop-blur-sm group-hover:border-blue-300 group-hover:bg-white/70"
+                          defaultValue={profile?.height_cm ? profile.height_cm / 10 : ""}
+                          placeholder="e.g., 175"
+                        />
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300 pointer-events-none"></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="weightKg" className="block text-sm font-semibold text-black">
+                        Weight (kg)
+                      </label>
+                      <div className="relative group">
+                        <input
+                          id="weightKg"
+                          name="weightKg"
+                          type="number"
+                          step="any"
+                          required
+                          className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-black placeholder-gray-500 bg-white/50 backdrop-blur-sm group-hover:border-blue-300 group-hover:bg-white/70"
+                          defaultValue={profile?.weight_kg ? profile.weight_kg / 1000 : ""}
+                          placeholder="e.g., 70"
+                        />
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300 pointer-events-none"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Age Field */}
+                  <div className="space-y-2">
+                    <label htmlFor="age" className="block text-sm font-semibold text-black">
+                      Age
+                    </label>
+                    <div className="relative group">
+                      <input
+                        id="age"
+                        name="age"
+                        type="number"
+                        required
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-black placeholder-gray-500 bg-white/50 backdrop-blur-sm group-hover:border-blue-300 group-hover:bg-white/70"
+                        defaultValue={profile?.age ?? ""}
+                        placeholder="e.g., 25"
+                      />
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300 pointer-events-none"></div>
+                    </div>
+                  </div>
+
+                  {/* Gender Field */}
+                  <div className="space-y-2">
+                    <label htmlFor="gender" className="block text-sm font-semibold text-black">
+                      Gender
+                    </label>
+                    <div className="relative group">
+                      <select 
+                        id="gender"
+                        name="gender" 
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-black bg-white/50 backdrop-blur-sm group-hover:border-blue-300 group-hover:bg-white/70 appearance-none"
+                      >
+                        <option value="">Select gender...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-binary">Non-binary</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                      </select>
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300 pointer-events-none"></div>
+                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fitness Level Field */}
+                  <div className="space-y-2">
+                    <label htmlFor="fitness_level" className="block text-sm font-semibold text-black">
+                      Fitness Level
+                    </label>
+                    <div className="relative group">
+                      <select 
+                        id="fitness_level"
+                        name="fitness_level" 
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-black bg-white/50 backdrop-blur-sm group-hover:border-blue-300 group-hover:bg-white/70 appearance-none"
+                      >
+                        <option value="">Select fitness level...</option>
+                        <option value="BEGINNER">Beginner</option>
+                        <option value="INTERMEDIATE">Intermediate</option>
+                        <option value="ADVANCED">Advanced</option>
+                      </select>
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300 pointer-events-none"></div>
+                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-lg relative overflow-hidden group"
+                  >
+                    <span className="relative z-10 flex items-center justify-center">
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                          Saving Profile...
+                        </>
+                      ) : (
+                        <>
+                          Complete Profile Setup
+                          <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </>
+                      )}
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/20 group-hover:to-indigo-500/20 transition-all duration-300"></div>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Custom Animations */}
+        <style jsx global>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+          }
+          
+          @keyframes float-delayed {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(-180deg); }
+          }
+          
+          @keyframes pulse-slow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+          }
+          
+          @keyframes fade-in-up {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          
+          @keyframes fade-in-up-delayed {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+            animation-delay: 0.2s;
+          }
+          
+          .animate-float { animation: float 6s ease-in-out infinite; }
+          .animate-float-delayed { animation: float-delayed 8s ease-in-out infinite; }
+          .animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
+          .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
+          .animate-fade-in-up-delayed { animation: fade-in-up-delayed 0.8s ease-out forwards; }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Profile is set up - show main dashboard
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-blue-400/30 to-indigo-500/30 rounded-full blur-xl animate-float"></div>
+        <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-full blur-xl animate-float-delayed"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-blue-300/10 to-indigo-400/10 rounded-full blur-3xl animate-pulse-slow"></div>
+      </div>
+
+      <div className="relative z-10 min-h-screen">
+        {/* Header */}
+        <header className="bg-white/80 backdrop-blur-xl border-b border-white/20">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <Link href="/" className="group">
+                <div className="relative">
+                  <h1 className="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
+                    Freesio
+                  </h1>
+                  <h2 className="text-xl font-black text-black group-hover:scale-105 transition-transform duration-300">
+                    Therapist
+                  </h2>
+                  <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+                </div>
+              </Link>
+              
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <p className="text-black font-semibold">Welcome back,</p>
+                  <p className="text-black/80 text-sm">{profile.name}</p>
+                </div>
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">{profile.name.charAt(0).toUpperCase()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <div className="text-center mb-12 animate-fade-in-up">
+            <h3 className="text-4xl font-bold text-black mb-4">Your Therapy Dashboard</h3>
+            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mb-4"></div>
+            <p className="text-black/80 text-lg">Ready to start your wellness journey</p>
+          </div>
+
+          {/* Dashboard Cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Bio Data Card */}
+            <div className="group">
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-300/10 to-indigo-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
+                
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  
+                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-blue-600 transition-colors duration-300">
+                    Bio Data
+                  </h4>
+                  <p className="text-black/70 mb-6">
+                    View and manage your health metrics and personal information
+                  </p>
+                  
+                  <div className="inline-flex items-center justify-center w-full text-blue-600 font-semibold group-hover:text-blue-700 transition-colors duration-300">
+                    View Bio Data
+                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Ailments Card */}
+            <div className="group">
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-purple-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-300/10 to-pink-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
+                
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  
+                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-indigo-600 transition-colors duration-300">
+                    Ailments
+                  </h4>
+                  <p className="text-black/70 mb-6">
+                    Track your symptoms and get personalized treatment recommendations
+                  </p>
+                  
+                  <div className="inline-flex items-center justify-center w-full text-indigo-600 font-semibold group-hover:text-indigo-700 transition-colors duration-300">
+                    Manage Ailments
+                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Therapy Sessions Card */}
+            <div className="group">
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed-2">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-pink-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-pink-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-pink-300/10 to-red-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
+                
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  
+                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-purple-600 transition-colors duration-300">
+                    Therapy Sessions
+                  </h4>
+                  <p className="text-black/70 mb-6">
+                    Start your AI-powered therapy sessions and track your progress
+                  </p>
+                  
+                  <div className="inline-flex items-center justify-center w-full text-purple-600 font-semibold group-hover:text-purple-700 transition-colors duration-300">
+                    Start Session
+                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Profile Summary */}
+          <div className="mt-12 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20 relative overflow-hidden animate-fade-in-up-delayed">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/90 to-blue-50/50 rounded-3xl"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16"></div>
+            
+            <div className="relative z-10">
+              <h4 className="text-2xl font-bold text-black mb-6">Your Profile Summary</h4>
+              <div className="grid md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <p className="text-black/60 text-sm">Name</p>
+                  <p className="text-black font-semibold">{profile.name}</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <p className="text-black/60 text-sm">Age</p>
+                  <p className="text-black font-semibold">{profile.age} years</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <p className="text-black/60 text-sm">Height</p>
+                  <p className="text-black font-semibold">{profile.height_cm / 10} cm</p>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                    </svg>
+                  </div>
+                  <p className="text-black/60 text-sm">Weight</p>
+                  <p className="text-black font-semibold">{profile.weight_kg / 1000} kg</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Custom Animations */}
+      <style jsx global>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        @keyframes float-delayed {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-15px) rotate(-180deg); }
+        }
+        
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        
+        @keyframes fade-in-up {
+          0% { opacity: 0; transform: translateY(30px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fade-in-up-delayed {
+          0% { opacity: 0; transform: translateY(30px); }
+          100% { opacity: 1; transform: translateY(0); }
+          animation-delay: 0.2s;
+        }
+        
+        @keyframes card-slide-in {
+          0% { opacity: 0; transform: translateY(50px) scale(0.9); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        @keyframes card-slide-in-delayed {
+          0% { opacity: 0; transform: translateY(50px) scale(0.9); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+          animation-delay: 0.2s;
+        }
+        
+        @keyframes card-slide-in-delayed-2 {
+          0% { opacity: 0; transform: translateY(50px) scale(0.9); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+          animation-delay: 0.4s;
+        }
+        
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-delayed { animation: float-delayed 8s ease-in-out infinite; }
+        .animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
+        .animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
+        .animate-fade-in-up-delayed { animation: fade-in-up-delayed 0.8s ease-out forwards; }
+        .animate-card-slide-in { animation: card-slide-in 0.8s ease-out forwards; }
+        .animate-card-slide-in-delayed { animation: card-slide-in-delayed 0.8s ease-out forwards; }
+        .animate-card-slide-in-delayed-2 { animation: card-slide-in-delayed-2 0.8s ease-out forwards; }
+      `}</style>
+    </div>
+  );
 }
