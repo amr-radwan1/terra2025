@@ -44,21 +44,182 @@ export default function DashboardPage() {
   if (fetchingProfile) return <div>Loading profile...</div>;
 
   console.log(profile)
-  if (! profile?.bio_setup){
+    if (!profile?.bio_setup) {
     return (
-        <div className="p-6">
-        <h1 className="text-xl font-bold">Welcome, {user.email}</h1>
-        {profileError && (
-            <p className="text-red-600 text-sm">Profile error: {profileError}</p>
-        )}
-        <p>Your name is: {profile?.name ?? 'NULL'}</p>
-        <p>Your email: {profile?.email ?? 'NULL'}</p>
+  <div className="p-6">
+    <h1 className="text-xl font-bold">Welcome, {user.email}</h1>
+    {profileError && <p className="text-red-600 text-sm">Profile error: {profileError}</p>}
 
-        
-        {/* other profile fields */}
+    <form
+      className="grid gap-3 mt-4 max-w-md"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget as HTMLFormElement);
+
+        const name = String(fd.get("name") || "").trim();
+        const heightCm = Number(fd.get("heightCm"));
+        const weightKg = Number(fd.get("weightKg"));
+        const age = Number(fd.get("age"));
+
+        const gender = String(fd.get("gender") || "");
+        const pain_area = String(fd.get("pain_area") || "");
+        const pain_level = Number(fd.get("pain_level"));
+        const fitness_level = String(fd.get("fitness_level") || "");
+        const medical_history = String(fd.get("medical_history") || "");
+
+        if (!name || !heightCm || !weightKg || !age) {
+          window.alert("Please fill all required fields.");
+          return;
+        }
+
+        // convert to DB units
+        const height_mm = Math.round(heightCm * 10);       // cm -> mm
+        const weight_grams = Math.round(weightKg * 1000);  // kg -> g
+
+        try {
+          // update core fields + mark setup complete
+          await ProfileService.setupProfile(
+            user!.email!,
+            name,
+            height_mm,
+            weight_grams,
+            age
+          );
+
+          // update extra fields (assumes these columns exist)
+          await supabase
+            .from("user_profiles")
+            .update({ gender, pain_area, pain_level, fitness_level, medical_history })
+            .eq("email", user!.email!);
+
+          // flip UI to "completed"
+          setProfile({
+            email: user!.email!,
+            name,
+            height_mm,
+            weight_grams,
+            age,
+            bio_setup: true,
+          });
+        } catch (err: any) {
+          window.alert(err?.message || "Failed to save profile.");
+        }
+      }}
+    >
+      {/* Basic fields */}
+      <label className="grid gap-1">
+        <span className="text-sm">Name</span>
+        <input
+          name="name"
+          className="border rounded p-2"
+          defaultValue={profile?.name ?? ""}
+          placeholder="Your name"
+          required
+        />
+      </label>
+
+      <div className="grid grid-cols-2 gap-3">
+        <label className="grid gap-1">
+          <span className="text-sm">Height (cm)</span>
+          <input
+            name="heightCm"
+            type="number"
+            step="any"
+            className="border rounded p-2"
+            defaultValue={profile?.height_mm ? profile.height_mm / 10 : ""}
+            placeholder="e.g., 175"
+            required
+          />
+        </label>
+        <label className="grid gap-1">
+          <span className="text-sm">Weight (kg)</span>
+          <input
+            name="weightKg"
+            type="number"
+            step="any"
+            className="border rounded p-2"
+            defaultValue={profile?.weight_grams ? profile.weight_grams / 1000 : ""}
+            placeholder="e.g., 70"
+            required
+          />
+        </label>
+      </div>
+
+      <label className="grid gap-1">
+        <span className="text-sm">Age</span>
+        <input
+          name="age"
+          type="number"
+          className="border rounded p-2"
+          defaultValue={profile?.age ?? ""}
+          placeholder="e.g., 21"
+          required
+        />
+      </label>
+
+      {/* Extra fields */}
+      <label className="grid gap-1">
+        <span className="text-sm">Gender</span>
+        <select name="gender" className="border rounded p-2">
+          <option value="">Select…</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Non-binary</option>
+          <option>Prefer not to say</option>
+        </select>
+      </label>
+
+      <label className="grid gap-1">
+        <span className="text-sm">Where do you feel pain or discomfort?</span>
+        <input
+          name="pain_area"
+          className="border rounded p-2"
+          placeholder="e.g., shoulder, knee, lower back"
+        />
+      </label>
+
+      <label className="grid gap-1">
+        <span className="text-sm">Pain Level (1–10, where 10 is severe)</span>
+        <input
+          name="pain_level"
+          type="range"
+          min={1}
+          max={10}
+          defaultValue={5}
+          className="w-full"
+        />
+        <div className="flex justify-between text-xs text-gray-600">
+          <span>1 (Mild)</span><span>5</span><span>10 (Severe)</span>
         </div>
-        );
-    }
+      </label>
+
+      <label className="grid gap-1">
+        <span className="text-sm">Fitness Level</span>
+        <select name="fitness_level" className="border rounded p-2">
+          <option value="">Select…</option>
+          <option>Beginner</option>
+          <option>Intermediate</option>
+          <option>Advanced</option>
+        </select>
+      </label>
+
+      <label className="grid gap-1">
+        <span className="text-sm">Medical History (Optional)</span>
+        <textarea
+          name="medical_history"
+          className="border rounded p-2"
+          placeholder="Any relevant conditions, surgeries, or injuries"
+          rows={3}
+        />
+      </label>
+
+      <button type="submit" className="rounded p-2 border mt-2">Save profile</button>
+    </form>
+  </div>
+);
+
+  }
+
     else {
         return (
             <div>Welcom Back {profile.name}! You have setup finished, you can now nav to bio data, and ailments</div>
