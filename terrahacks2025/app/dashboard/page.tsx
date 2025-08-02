@@ -445,20 +445,20 @@ export default function DashboardPage() {
                         <p className="text-black/60 text-sm">{user.email}</p>
                       </div>
                       
-                      <div className="py-2">
-                        <button
-                          onClick={() => {
-                            // TODO: Implement profile picture change
-                            alert('Profile picture change feature coming soon!');
-                            setShowUserMenu(false);
-                          }}
-                          className="w-full px-4 py-3 text-left text-black hover:bg-blue-50/50 transition-colors duration-200 flex items-center space-x-3"
-                        >
-                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          <span>Change Profile Picture</span>
-                        </button>
+                                              <div className="py-2">
+                          <button
+                            onClick={() => {
+                              // TODO: Implement profile picture change
+                              alert('Profile picture change feature coming soon!');
+                              setShowUserMenu(false);
+                            }}
+                            className="w-full px-4 py-3 text-left text-black hover:bg-blue-50/50 transition-colors duration-200 flex items-center space-x-3"
+                          >
+                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span>Change Profile Picture</span>
+                          </button>
                         
                         <button
                           onClick={async () => {
@@ -523,30 +523,37 @@ export default function DashboardPage() {
             </div>
 
             {/* Planning Card */}
-            <div className="group h-full">
-            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed h-full flex flex-col">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-300/10 to-indigo-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
-
-                <div className="relative z-10 flex flex-col h-full">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+            <div className="group">
+              <Link href="/calendar">
+                <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-300/10 to-indigo-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    
+                    <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-blue-600 transition-colors duration-300">
+                      Planning
+                    </h4>
+                    <p className="text-black/70 mb-6">
+                      View your personalized exercise schedule and upcoming therapy sessions
+                    </p>
+                    
+                    <div className="inline-flex items-center justify-center w-full text-blue-600 font-semibold group-hover:text-blue-700 transition-colors duration-300">
+                      View Calendar
+                      <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
-
-                <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-blue-600 transition-colors duration-300">Planning</h4>
-                <p className="text-black/70 mb-6">View your personalized exercise schedule and upcoming therapy sessions</p>
-
-                <div className="inline-flex items-center justify-center w-full text-blue-600 font-semibold group-hover:text-blue-700 transition-colors duration-300 mt-auto">
-                    View Schedule
-                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                </div>
-                </div>
-            </div>
+              </Link>
             </div>
 
             {/* Ailments Card */}
@@ -612,13 +619,33 @@ export default function DashboardPage() {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={async () => {
+                        // Validate input values
+                        const age = Number(editFormData.age);
+                        const heightM = Number(editFormData.heightM);
+                        const weightKg = Number(editFormData.weightKg);
+
+                        if (!age || age < 1 || age > 120) {
+                          alert('Please enter a valid age between 1 and 120');
+                          return;
+                        }
+
+                        if (!heightM || heightM < 0.5 || heightM > 2.5) {
+                          alert('Please enter a valid height between 0.5 and 2.5 meters');
+                          return;
+                        }
+
+                        if (!weightKg || weightKg < 20 || weightKg > 300) {
+                          alert('Please enter a valid weight between 20 and 300 kg');
+                          return;
+                        }
+
                         try {
                           setIsSubmitting(true);
                           await ProfileService.updateProfileFields(
                             user.email,
-                            Number(editFormData.heightCm),
-                            Number(editFormData.weightKg),
-                            Number(editFormData.age)
+                            heightM,
+                            weightKg,
+                            age
                           );
                           
                           // Update local profile state
