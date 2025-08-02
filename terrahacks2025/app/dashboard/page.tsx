@@ -46,6 +46,7 @@ export default function DashboardPage() {
   console.log(profile)
     if (!profile?.bio_setup) {
     return (
+      
   <div className="p-6">
     <h1 className="text-xl font-bold">Welcome, {user.email}</h1>
     {profileError && <p className="text-red-600 text-sm">Profile error: {profileError}</p>}
