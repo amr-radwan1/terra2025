@@ -18,6 +18,25 @@ export const SignInService = {
             throw error;
         }
     },
+    async signInWithGoogle(){
+        try{
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`
+                }
+            })
+
+            if (error){
+                console.error("Error signing in with Google")
+                throw error;
+            }
+            console.log("Google sign in initiated: ", data)
+        } catch(error) {
+            console.error("Error occured signing in with Google")
+            throw error;
+        }
+    },
     async userSignUp(email_entered: string, password_entered:string){
 
         try{
