@@ -24,14 +24,14 @@ export const ProfileService = {
         return data;
     },
 
-    async setupProfile(email: string, name: string, height_mm: number, weight_grams: number, age: number, gender: string, fitness_level: string ) {
+    async setupProfile(email: string, name: string, height_cm: number, weight_kg: number, age: number, gender: string, fitness_level: string ) {
         try {
             const { data, error } = await supabase
                 .from('user_profiles')
                 .update({
                     name: name,
-                    height_mm: height_mm,
-                    weight_grams: weight_grams,
+                    height_cm: height_cm,
+                    weight_kg: weight_kg,
                     age: age,
                     gender: gender,
                     fitness_level: fitness_level,
@@ -52,7 +52,6 @@ export const ProfileService = {
             console.error("An error occurred while updating a Profile:", error);
             throw error;
         }
-
     },
 
     async addMedicalCondition(email: string, is_physical: boolean,if_physical_where: string,description: string, pain_level: number){
