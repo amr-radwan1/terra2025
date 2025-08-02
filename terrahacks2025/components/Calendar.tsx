@@ -170,14 +170,23 @@ export default function Calendar() {
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    const daysInMonth = lastDay.getDate();
+    const firstDayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
     
     const days: DayData[] = [];
     
-    for (let i = 0; i < 42; i++) {
-      const currentDay = new Date(startDate);
-      currentDay.setDate(startDate.getDate() + i);
+    // Add empty slots for days before the first day of the month
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      days.push({
+        date: new Date(0), // Invalid date for empty slots
+        exercises: [],
+        completed: false
+      });
+    }
+    
+    // Generate days from 1 to last day of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDay = new Date(year, month, day);
       
       // Assign 2-3 exercises per day based on day of week
       const dayOfWeek = currentDay.getDay();
@@ -212,6 +221,16 @@ export default function Calendar() {
       });
     }
     
+    // Add empty slots to complete the last week (if needed)
+    const totalSlots = Math.ceil(days.length / 7) * 7;
+    while (days.length < totalSlots) {
+      days.push({
+        date: new Date(0), // Invalid date for empty slots
+        exercises: [],
+        completed: false
+      });
+    }
+    
     return days;
   };
 
@@ -231,6 +250,10 @@ export default function Calendar() {
 
   const isCurrentMonth = (date: Date) => {
     return date.getMonth() === currentDate.getMonth();
+  };
+
+  const isEmptySlot = (date: Date) => {
+    return date.getTime() === 0; // Invalid date check
   };
 
   const isToday = (date: Date) => {
@@ -360,51 +383,53 @@ export default function Calendar() {
 
         <div className="grid grid-cols-7 gap-2">
           {calendarData.map((dayData, index) => (
-            <button
+            <div
               key={index}
-              onClick={() => handleDateClick(dayData)}
               className={`
-                relative p-3 rounded-2xl text-left transition-all duration-300 hover:scale-105 hover:shadow-lg min-h-[80px]
-                ${isCurrentMonth(dayData.date) 
-                  ? 'bg-white/70 backdrop-blur-sm hover:bg-white/90' 
-                  : 'bg-gray-100/40 text-gray-400'
+                relative p-3 rounded-2xl text-left min-h-[80px]
+                ${isEmptySlot(dayData.date) 
+                  ? 'bg-transparent' 
+                  : 'bg-white/70 backdrop-blur-sm hover:bg-white/90 transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer'
                 }
                 ${isToday(dayData.date) ? 'ring-2 ring-yellow-400 ring-offset-2 bg-yellow-50/50' : ''}
                 ${isSelected(dayData.date) ? 'ring-2 ring-indigo-400 ring-offset-2' : ''}
               `}
+              onClick={() => !isEmptySlot(dayData.date) && handleDateClick(dayData)}
             >
-              <div className="text-sm font-semibold text-black mb-2">
-                {dayData.date.getDate()}
-              </div>
-              
-              {/* Exercise indicators - small squares */}
-              <div className="flex flex-wrap gap-1">
-                {dayData.exercises.slice(0, 4).map((exercise, idx) => (
-                  <div
-                    key={idx}
-                    className={`
-                      w-1.5 h-1.5 rounded-sm
-                      ${dayData.completed ? 'bg-red-500' : 'bg-blue-400'}
-                    `}
-                    title={exercise.name}
-                  />
-                ))}
-                {dayData.exercises.length > 4 && (
-                  <span className="text-xs text-black/50">+{dayData.exercises.length - 4}</span>
-                )}
-              </div>
-              
-              {/* Big checkmark for completed days */}
-              {dayData.completed && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
+              {!isEmptySlot(dayData.date) && (
+                <>
+                  <div className="text-sm font-semibold text-black mb-2">
+                    {dayData.date.getDate()}
+                  </div>
+                  
+                  {/* Exercise indicators - small squares */}
+                  <div className="flex flex-wrap gap-1">
+                    {dayData.exercises.slice(0, 4).map((exercise, idx) => (
+                      <div
+                        key={idx}
+                        className={`
+                          w-1.5 h-1.5 rounded-sm
+                          ${dayData.completed ? 'bg-red-500' : 'bg-blue-400'}
+                        `}
+                        title={exercise.name}
+                      />
+                    ))}
+                    {dayData.exercises.length > 4 && (
+                      <span className="text-xs text-black/50">+{dayData.exercises.length - 4}</span>
+                    )}
+                  </div>
+                  
+                  {/* Big checkmark for completed days */}
+                  {dayData.completed && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </>
               )}
-              
-
-            </button>
+            </div>
           ))}
         </div>
       </div>
