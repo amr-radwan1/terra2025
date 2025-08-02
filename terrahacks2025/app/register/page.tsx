@@ -177,7 +177,7 @@ export default function RegisterPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <p className="text-green-700 text-sm">
-                        Account created successfully! Check your email if verification is required.
+                        Account created successfully!
                       </p>
                     </div>
                   </div>

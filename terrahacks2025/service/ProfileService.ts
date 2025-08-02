@@ -9,6 +9,16 @@ export type UserProfile = {
   bio_setup: boolean;
 };
 
+export type MedicalCondition = {
+  id: number;
+  email: string;
+  is_physical: boolean;
+  if_physical_where: string;
+  description: string;
+  pain_level: number; // 1-10
+  created_at?: string | null;
+};
+
 export const ProfileService = {
     async getProfileByEmail(email: string): Promise<UserProfile | null>{
 
@@ -113,5 +123,44 @@ export const ProfileService = {
             console.error("An error occurred while adding a Condition:", error);
             throw error;
         }
+    },
+
+    async getMedicalConditionsByEmail(email: string) {
+    const { data, error } = await supabase
+        .from('medical_conditions')
+        .select('id, email, is_physical, if_physical_where, description, pain_level')
+        .eq('email', email)
+        .order('id', { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+    },
+
+    async updateMedicalCondition(
+    id: number,
+    email: string,
+    fields: Partial<Pick<MedicalCondition, 'is_physical' | 'if_physical_where' | 'description' | 'pain_level'>>
+    ) {
+    const { data, error } = await supabase
+        .from('medical_conditions')
+        .update(fields)
+        .eq('id', id)
+        .eq('email', email)
+        .select('id, email, is_physical, if_physical_where, description, pain_level')
+        .single();
+
+    if (error) throw error;
+    return data!;
+    },
+
+    async deleteMedicalCondition(id: number, email: string) {
+    const { error } = await supabase
+        .from('medical_conditions')
+        .delete()
+        .eq('id', id)
+        .eq('email', email);
+
+    if (error) throw error;
     }
+
 };
