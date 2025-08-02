@@ -581,12 +581,16 @@ export default function DashboardPage() {
                     Track your symptoms and get personalized treatment recommendations
                   </p>
                   
-                  <div className="inline-flex items-center justify-center w-full text-indigo-600 font-semibold group-hover:text-indigo-700 transition-colors duration-300">
+                  <Link
+                    href="/ailments"
+                    className="inline-flex items-center justify-center w-full text-indigo-600 font-semibold group-hover:text-indigo-700 transition-colors duration-300"
+                    >
                     Manage Ailments
                     <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
-                  </div>
+                  </Link>
+
                 </div>
               </div>
             </div>
