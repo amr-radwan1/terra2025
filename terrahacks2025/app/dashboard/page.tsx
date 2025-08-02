@@ -618,8 +618,8 @@ export default function DashboardPage() {
                           setIsSubmitting(true);
                                                                                await ProfileService.updateProfileFields(
                             user.email,
-                            Number(editFormData.heightCm) * 10,
-                            Number(editFormData.weightKg) * 1000,
+                            Number(editFormData.heightCm),
+                            Number(editFormData.weightKg),
                             Number(editFormData.age)
                           );
                           
