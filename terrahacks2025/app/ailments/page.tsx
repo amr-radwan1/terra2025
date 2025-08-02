@@ -8,7 +8,7 @@ import { ProfileService, MedicalCondition, UserProfile } from "@/service/Profile
 
 export default function AilmentsPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   const [items, setItems] = useState<MedicalCondition[]>([]);
   const [fetching, setFetching] = useState(false);
@@ -43,6 +43,7 @@ export default function AilmentsPage() {
     pain_level: 1,
   });
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -89,6 +90,24 @@ export default function AilmentsPage() {
       })();
     }
   }, [loading, user]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   // Open modal & seed form
   const openModal = (mc: MedicalCondition) => {
@@ -221,9 +240,56 @@ export default function AilmentsPage() {
                   <p className="text-black/80 text-sm">{profile.name}</p>
                 </div>
                 
-                {/* User Avatar */}
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-sm">{profile.name.charAt(0).toUpperCase()}</span>
+                {/* User Avatar with Dropdown */}
+                <div className="relative user-menu-container">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    <span className="text-white font-bold text-sm">{profile.name.charAt(0).toUpperCase()}</span>
+                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  {showUserMenu && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden z-50 animate-dropdown">
+                      <div className="p-4 border-b border-gray-100">
+                        <p className="text-black font-semibold">{profile.name}</p>
+                        <p className="text-black/60 text-sm">{user.email}</p>
+                      </div>
+                      
+                      <div className="py-2">
+                        <button
+                          onClick={() => {
+                            // TODO: Implement profile picture change
+                            alert('Profile picture change feature coming soon!');
+                            setShowUserMenu(false);
+                          }}
+                          className="w-full px-4 py-3 text-left text-black hover:bg-blue-50/50 transition-colors duration-200 flex items-center space-x-3"
+                        >
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span>Change Profile Picture</span>
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await signOut();
+                              router.push('/');
+                            } catch (error) {
+                              console.error('Error signing out:', error);
+                            }
+                          }}
+                          className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50/50 transition-colors duration-200 flex items-center space-x-3"
+                        >
+                          <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -296,8 +362,7 @@ export default function AilmentsPage() {
       {active && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={closeModal}></div>
-          <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20
-                w-[95vw] max-w-7xl p-6 md:p-8">
+          <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 w-[95vw] max-w-7xl p-6 md:p-8">
             <div className="flex items-center justify-between mb-4">
               <h5 className="text-2xl font-bold text-black">Ailment Details</h5>
               <button
@@ -590,6 +655,16 @@ export default function AilmentsPage() {
           </div>
         </div>
       )}
+
+      {/* Custom Animations */}
+      <style jsx global>{`
+        @keyframes dropdown {
+          0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .animate-dropdown { animation: dropdown 0.2s ease-out forwards; }
+      `}</style>
     </div>
   );
 }
