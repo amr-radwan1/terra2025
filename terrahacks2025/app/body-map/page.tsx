@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ProfileService } from '@/service/ProfileService';
+import { useAuth } from '@/hooks/useAuth';
+import { ProfileService, UserProfile } from '@/service/ProfileService';
 import { supabase } from '@/supabase/client';
 
 
@@ -109,10 +110,36 @@ const bodyZones: BodyZone[] = [
 
 export default function BodyMapPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [selectedZones, setSelectedZones] = useState<BodyZone[]>([]);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [painLevels, setPainLevels] = useState<{[key: string]: number}>({});
   const [submitting, setSubmitting] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isGeneratingExercise, setIsGeneratingExercise] = useState(false);
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login?next=/body-map');
+    }
+  }, [user, loading, router]);
+
+  // Load user profile
+  useEffect(() => {
+    if (user?.email) {
+      (async () => {
+        try {
+          const result = await ProfileService.getProfileByEmail(user.email);
+          if (result) {
+            setProfile(result);
+          }
+        } catch (e: unknown) {
+          console.error('Failed to load profile:', e);
+        }
+      })();
+    }
+  }, [user]);
 
   const toggleZone = (zone: BodyZone) => {
     if (selectedZones.find(z => z.id === zone.id)) {
@@ -171,6 +198,81 @@ export default function BodyMapPage() {
       setSubmitting(false);
     }
   };
+
+  // Handle body part selection and exercise generation
+  const handleGenerateExercise = async (zone: BodyZone) => {
+    if (!profile || !user) {
+      alert('User profile not found. Please complete your profile setup.');
+      return;
+    }
+
+    setIsGeneratingExercise(true);
+
+    try {
+      // Get pain level for this zone, default to 5 if not set
+      const painLevel = painLevels[zone.id] || 5;
+
+      // Prepare the request data for the exercise recommendation API
+      const requestData = {
+        height: profile.height_cm,
+        weight: profile.weight_kg,
+        age: profile.age,
+        gender: profile.gender || 'other',
+        painLocation: zone.name,
+        painLevel: painLevel,
+        fitnessLevel: profile.fitness_level || 'beginner',
+        medicalHistory: `Pain in ${zone.name}. Common patterns: ${zone.painPatterns.join(', ')}`,
+        currentLimitations: `Affected area: ${zone.description}`
+      };
+
+      // Call the exercise recommendation API
+      const response = await fetch('/api/exercise-recommendation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate exercise recommendation');
+      }
+
+      const apiResponse = await response.json();
+      console.log('Body-map: API response received:', apiResponse);
+      
+      // Extract the actual exercise data from the API response
+      const exerciseData = apiResponse.success ? apiResponse.data : apiResponse;
+      console.log('Body-map: Exercise data to store:', exerciseData);
+
+      // Store the exercise data in sessionStorage and navigate to physio coach
+      sessionStorage.setItem('generatedExercise', JSON.stringify(exerciseData));
+      router.push('/physio-coach');
+
+    } catch (error) {
+      console.error('Error generating exercise:', error);
+      alert('Failed to generate exercise recommendation. Please try again.');
+    } finally {
+      setIsGeneratingExercise(false);
+    }
+  };
+
+  // Show loading state while authentication is being checked
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-black">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
@@ -526,19 +628,30 @@ export default function BodyMapPage() {
             <div className="lg:col-span-1">
               {selectedZones.length > 0 ? (
                 <div className="space-y-6">
-                  {/* Done Button - Top */}
+                  {/* Action Buttons - Top */}
                   <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl p-6 shadow-2xl border border-white/20 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-400/20"></div>
                     <div className="relative z-10 text-center">
-                      <h4 className="text-xl font-bold text-white mb-3">Based on your pain assessment, we'll create a personalized exercise program.</h4>
+                      <h4 className="text-xl font-bold text-white mb-3">Save Your Pain Assessment</h4>
+                      <p className="text-white/90 text-sm mb-4">Save these pain areas to your ailments record for tracking and future reference.</p>
                       <button
                         onClick={handleDone}
                         disabled={submitting}
-                        className="w-full bg-white/20 ... disabled:opacity-60 disabled:cursor-not-allowed"
+                        className={`w-full bg-white/20 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-2xl border border-white/30 transition-all duration-300 ${
+                          submitting 
+                            ? 'opacity-60 cursor-not-allowed' 
+                            : 'hover:bg-white/30 transform hover:scale-105'
+                        }`}
                       >
-                        {submitting ? 'Saving…' : 'Done'}
+                        {submitting ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Saving...
+                          </div>
+                        ) : (
+                          'Save to Ailments'
+                        )}
                       </button>
-
                     </div>
                   </div>
 
@@ -610,6 +723,33 @@ export default function BodyMapPage() {
                                 </li>
                               ))}
                             </ul>
+                          </div>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="space-y-2">
+                            <button
+                              onClick={() => handleGenerateExercise(zone)}
+                              disabled={isGeneratingExercise}
+                              className={`w-full px-4 py-3 rounded-2xl font-semibold transition-all duration-300 ${
+                                isGeneratingExercise 
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                  : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transform hover:scale-105 shadow-lg hover:shadow-xl'
+                              }`}
+                            >
+                              {isGeneratingExercise ? (
+                                <div className="flex items-center justify-center">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                  Generating...
+                                </div>
+                              ) : (
+                                'Generate Exercise'
+                              )}
+                            </button>
+                            <p className="text-xs text-gray-500 text-center">
+                              Get AI-powered exercises for this specific pain area
+                            </p>
                           </div>
                         </div>
                       </div>
