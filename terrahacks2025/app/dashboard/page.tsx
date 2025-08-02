@@ -613,14 +613,34 @@ export default function DashboardPage() {
                 ) : (
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={async () => {
+                                            onClick={async () => {
+                        // Validate input values
+                        const age = Number(editFormData.age);
+                        const heightCm = Number(editFormData.heightCm);
+                        const weightKg = Number(editFormData.weightKg);
+
+                        if (!age || age < 1 || age > 120) {
+                          alert('Please enter a valid age between 1 and 120');
+                          return;
+                        }
+
+                        if (!heightCm || heightCm < 50 || heightCm > 250) {
+                          alert('Please enter a valid height between 50 and 250 cm');
+                          return;
+                        }
+
+                        if (!weightKg || weightKg < 20 || weightKg > 300) {
+                          alert('Please enter a valid weight between 20 and 300 kg');
+                          return;
+                        }
+
                         try {
                           setIsSubmitting(true);
-                                                                               await ProfileService.updateProfileFields(
+                          await ProfileService.updateProfileFields(
                             user.email,
-                            Number(editFormData.heightCm) * 10,
-                            Number(editFormData.weightKg) * 1000,
-                            Number(editFormData.age)
+                            heightCm * 10,
+                            weightKg * 1000,
+                            age
                           );
                           
                           // Update local profile state
