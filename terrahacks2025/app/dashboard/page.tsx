@@ -102,7 +102,7 @@ export default function DashboardPage() {
             type="number"
             step="any"
             className="border rounded p-2"
-            defaultValue={profile?.height_mm ? profile.height_mm / 10 : ""}
+            defaultValue={profile?.height_cm ? profile.height_cm / 10 : ""}
             placeholder="e.g., 175"
             required
           />
@@ -114,7 +114,7 @@ export default function DashboardPage() {
             type="number"
             step="any"
             className="border rounded p-2"
-            defaultValue={profile?.weight_grams ? profile.weight_grams / 1000 : ""}
+            defaultValue={profile?.weight_kg ? profile.weight_kg / 1000 : ""}
             placeholder="e.g., 70"
             required
           />
