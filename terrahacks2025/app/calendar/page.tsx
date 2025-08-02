@@ -7,6 +7,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { ProfileService, UserProfile } from '@/service/ProfileService';
 import Link from 'next/link';
 import Calendar from '@/components/Calendar';
+import { getSessionsForUserByEmail } from '@/service/SchedulingService';
+
+
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -15,7 +18,9 @@ export default function CalendarPage() {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [fetchingProfile, setFetchingProfile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-
+ 
+  console.log("User info: ",user);
+  console.log(getSessionsForUserByEmail(user.email))
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login?next=/calendar');
