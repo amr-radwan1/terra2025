@@ -24,7 +24,7 @@ export const ProfileService = {
         return data;
     },
 
-    async setupProfile(email: string, name: string, height_mm: number, weight_grams: number, age: number) {
+    async setupProfile(email: string, name: string, height_mm: number, weight_grams: number, age: number, gender: string, fitness_level: string ) {
         try {
             const { data, error } = await supabase
                 .from('user_profiles')
@@ -33,6 +33,8 @@ export const ProfileService = {
                     height_mm: height_mm,
                     weight_grams: weight_grams,
                     age: age,
+                    gender: gender,
+                    fitness_level: fitness_level,
                     bio_setup: true
                 })
                 .eq('email', email)
@@ -51,5 +53,32 @@ export const ProfileService = {
             throw error;
         }
 
+    },
+
+    async addMedicalCondition(email: string, is_physical: boolean,if_physical_where: string,description: string, pain_level: number){
+        try {
+            const { data, error } = await supabase
+                .from('medical_conditions')
+                .insert([
+                    {
+                        email: email,
+                        is_physical: is_physical,
+                        if_physical_where: if_physical_where,
+                        description:description,
+                        pain_level: pain_level
+                    }
+                ])
+                .select();
+                if (error) {
+                    console.error("Error adding Condition:", error);
+                    throw error;
+                }
+                //else show added customer in console
+                console.log("Condition added successfully:", data);
+                //return data; //return customer data for use
+        } catch (error) {
+            console.error("An error occurred while adding a Condition:", error);
+            throw error;
+        }
     }
 };
