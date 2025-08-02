@@ -24,12 +24,8 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await SignInService.userSignUp(email, password);
-      // If email confirmations are ON, user may need to verify email.
       setOk(true);
-      // Option A: go straight to dashboard if confirmations are OFF
       // router.replace("/dashboard");
-      // Option B: send them to login
-      // router.replace("/login?registered=1");
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : "Failed to register";
       setErr(errorMessage);
