@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { ProfileService, UserProfile } from '@/service/ProfileService';
+import { ProfileService, UserProfile, MedicalCondition } from '@/service/ProfileService';
 import Link from 'next/link';
 import Calendar from '@/components/Calendar';
 import { getSessionsForUserByEmail } from '@/service/SchedulingService';
@@ -18,9 +18,11 @@ export default function CalendarPage() {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [fetchingProfile, setFetchingProfile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
- 
-  console.log("User info: ",user);
-  console.log(getSessionsForUserByEmail(user.email))
+  const [userSessions, setUserSessions] = useState<any[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [medicalConditions, setMedicalConditions] = useState<MedicalCondition[]>([]);
+  const [loadingConditions, setLoadingConditions] = useState(false);
+
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login?next=/calendar');
@@ -43,6 +45,34 @@ export default function CalendarPage() {
           setProfileError(errorMessage);
         } finally {
           setFetchingProfile(false);
+        }
+      })();
+
+      // Fetch user sessions
+      (async () => {
+        setLoadingSessions(true);
+        try {
+          const sessions = await getSessionsForUserByEmail(user.email);
+          setUserSessions(sessions);
+          console.log('User sessions loaded:', sessions);
+        } catch (e: unknown) {
+          console.error('Failed to load sessions:', e);
+        } finally {
+          setLoadingSessions(false);
+        }
+      })();
+
+      // Fetch user medical conditions
+      (async () => {
+        setLoadingConditions(true);
+        try {
+          const conditions = await ProfileService.getMedicalConditionsByEmail(user.email);
+          setMedicalConditions(conditions);
+          console.log('Medical conditions loaded:', conditions);
+        } catch (e: unknown) {
+          console.error('Failed to load medical conditions:', e);
+        } finally {
+          setLoadingConditions(false);
         }
       })();
     }
@@ -193,12 +223,12 @@ export default function CalendarPage() {
           <div className="text-center mb-8 animate-fade-in-up">
             <h3 className="text-3xl font-bold text-black mb-3">Your Exercise Calendar</h3>
             <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mb-3"></div>
-            <p className="text-black/70 text-base">Click on any day to view your personalized physiotherapy exercises</p>
+            <p className="text-black/70 text-base">Your calendar gets updated every TWO WEEKS to accomade your progress</p>
           </div>
 
           {/* Calendar Component */}
           <div className="animate-fade-in-up-delayed">
-            <Calendar />
+            <Calendar userSessions={userSessions} medicalConditions={medicalConditions} />
           </div>
 
 
