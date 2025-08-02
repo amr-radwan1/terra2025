@@ -16,11 +16,11 @@ export default function DashboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    age: '',
-    heightCm: '',
-    weightKg: ''
-  });
+                  const [editFormData, setEditFormData] = useState({
+                  age: '',
+                  heightM: '',
+                  weightKg: ''
+                });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -54,8 +54,8 @@ export default function DashboardPage() {
     if (profile) {
       setEditFormData({
         age: profile.age?.toString() || '',
-        heightCm: profile.height_cm ? (profile.height_cm / 10).toString() : '',
-        weightKg: profile.weight_kg ? (profile.weight_kg / 1000).toString() : ''
+        heightM: profile.height_m ? profile.height_m.toString() : '',
+        weightKg: profile.weight_kg ? profile.weight_kg.toString() : ''
       });
     }
   }, [profile]);
@@ -164,20 +164,20 @@ export default function DashboardPage() {
                     const fd = new FormData(e.currentTarget as HTMLFormElement);
 
                     const name = String(fd.get("name") || "").trim();
-                    const heightCm = Number(fd.get("heightCm"));
+                    const heightM = Number(fd.get("heightM"));
                     const weightKg = Number(fd.get("weightKg"));
                     const age = Number(fd.get("age"));
                     const gender = String(fd.get("gender") || "");
                     const fitness_level = String(fd.get("fitness_level") || "");
 
-                    if (!name || !heightCm || !weightKg || !age) {
+                    if (!name || !heightM || !weightKg || !age) {
                       window.alert("Please fill all required fields.");
                       setIsSubmitting(false);
                       return;
                     }
 
                     try {
-                      await ProfileService.setupProfile(user.email, name, heightCm, weightKg, age, gender, fitness_level);
+                                              await ProfileService.setupProfile(user.email, name, heightM * 100, weightKg, age, gender, fitness_level);
                       // Refresh the page to show the updated profile
                       window.location.reload();
                     } catch (error) {
@@ -210,19 +210,21 @@ export default function DashboardPage() {
                   {/* Height and Weight Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label htmlFor="heightCm" className="block text-sm font-semibold text-black">
-                        Height (cm)
+                      <label htmlFor="heightM" className="block text-sm font-semibold text-black">
+                        Height (m)
                       </label>
                       <div className="relative group">
                         <input
-                          id="heightCm"
-                          name="heightCm"
+                          id="heightM"
+                          name="heightM"
                           type="number"
-                          step="any"
+                          step="0.01"
+                          min="0.5"
+                          max="2.5"
                           required
                           className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-black placeholder-gray-500 bg-white/50 backdrop-blur-sm group-hover:border-blue-300 group-hover:bg-white/70"
-                          defaultValue={profile?.height_cm ? profile.height_cm / 10 : ""}
-                          placeholder="e.g., 175"
+                          defaultValue={profile?.height_m ? profile.height_m : ""}
+                          placeholder="e.g., 1.75"
                         />
                         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300 pointer-events-none"></div>
                       </div>
@@ -240,7 +242,7 @@ export default function DashboardPage() {
                           step="any"
                           required
                           className="w-full px-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-300 text-black placeholder-gray-500 bg-white/50 backdrop-blur-sm group-hover:border-blue-300 group-hover:bg-white/70"
-                          defaultValue={profile?.weight_kg ? profile.weight_kg / 1000 : ""}
+                          defaultValue={profile?.weight_kg ? profile.weight_kg : ""}
                           placeholder="e.g., 70"
                         />
                         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300 pointer-events-none"></div>
@@ -613,43 +615,23 @@ export default function DashboardPage() {
                 ) : (
                   <div className="flex items-center space-x-2">
                     <button
-                                            onClick={async () => {
-                        // Validate input values
-                        const age = Number(editFormData.age);
-                        const heightCm = Number(editFormData.heightCm);
-                        const weightKg = Number(editFormData.weightKg);
-
-                        if (!age || age < 1 || age > 120) {
-                          alert('Please enter a valid age between 1 and 120');
-                          return;
-                        }
-
-                        if (!heightCm || heightCm < 50 || heightCm > 250) {
-                          alert('Please enter a valid height between 50 and 250 cm');
-                          return;
-                        }
-
-                        if (!weightKg || weightKg < 20 || weightKg > 300) {
-                          alert('Please enter a valid weight between 20 and 300 kg');
-                          return;
-                        }
-
+                      onClick={async () => {
                         try {
                           setIsSubmitting(true);
                           await ProfileService.updateProfileFields(
                             user.email,
-                            heightCm * 10,
-                            weightKg * 1000,
-                            age
+                            Number(editFormData.heightCm),
+                            Number(editFormData.weightKg),
+                            Number(editFormData.age)
                           );
                           
                           // Update local profile state
                           if (profile) {
                             setProfile({
                               ...profile,
-                              age: Number(editFormData.age),
-                              height_cm: Number(editFormData.heightCm) * 10,
-                              weight_kg: Number(editFormData.weightKg) * 1000
+                              age: age,
+                              height_m: heightM,
+                              weight_kg: weightKg
                             });
                           }
                           
@@ -687,8 +669,8 @@ export default function DashboardPage() {
                         if (profile) {
                           setEditFormData({
                             age: profile.age?.toString() || '',
-                            heightCm: profile.height_cm ? (profile.height_cm / 10).toString() : '',
-                            weightKg: profile.weight_kg ? (profile.weight_kg / 1000).toString() : ''
+                            heightM: profile.height_m ? profile.height_m.toString() : '',
+                            weightKg: profile.weight_kg ? profile.weight_kg.toString() : ''
                           });
                         }
                       }}
@@ -745,16 +727,16 @@ export default function DashboardPage() {
                     {isEditingProfile ? (
                       <input
                         type="number"
-                        step="0.1"
-                        value={editFormData.heightCm}
-                        onChange={(e) => setEditFormData({...editFormData, heightCm: e.target.value})}
+                        step="0.01"
+                        value={editFormData.heightM}
+                        onChange={(e) => setEditFormData({...editFormData, heightM: e.target.value})}
                         className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
-                        placeholder="Height (cm)"
-                        min="50"
-                        max="250"
+                        placeholder="Height (m)"
+                        min="0.5"
+                        max="2.5"
                       />
                     ) : (
-                      <p className="text-black font-semibold">{profile.height_cm / 10} cm</p>
+                      <p className="text-black font-semibold">{profile.height_m} m</p>
                     )}
                   </div>
                   
@@ -777,7 +759,7 @@ export default function DashboardPage() {
                         max="300"
                       />
                     ) : (
-                      <p className="text-black font-semibold">{profile.weight_kg / 1000} kg</p>
+                      <p className="text-black font-semibold">{profile.weight_kg} kg</p>
                     )}
                   </div>
                 </div>
