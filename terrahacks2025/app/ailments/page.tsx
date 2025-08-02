@@ -22,8 +22,8 @@ export default function AilmentsPage() {
 
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({
-    is_physical: true,
-    if_physical_where: "",
+    is_physio: true,
+    location_on_body: "",
     description: "",
     pain_level: 1,
   });
@@ -34,8 +34,8 @@ export default function AilmentsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [addForm, setAddForm] = useState({
-    is_physical: true,
-    if_physical_where: "",
+    is_physio: true,
+    location_on_body: "",
     description: "",
     pain_level: 1,
   });
@@ -72,8 +72,8 @@ export default function AilmentsPage() {
     setActiveId(mc.id);
     setEditMode(false);
     setForm({
-      is_physical: mc.is_physical,
-      if_physical_where: mc.if_physical_where ?? "",
+      is_physio: mc.is_physio,
+      location_on_body: mc.location_on_body ?? "",
       description: mc.description ?? "",
       pain_level: mc.pain_level ?? 1,
     });
@@ -89,8 +89,8 @@ export default function AilmentsPage() {
     try {
       setSaving(true);
       const updated = await ProfileService.updateMedicalCondition(active.id, user.email, {
-        is_physical: form.is_physical,
-        if_physical_where: form.if_physical_where,
+        is_physio: form.is_physio,
+        location_on_body: form.location_on_body,
         description: form.description,
         pain_level: Number(form.pain_level),
       });
@@ -121,7 +121,7 @@ export default function AilmentsPage() {
   // --- NEW: Add handler ---
   const onAdd = async () => {
     if (!user?.email) return;
-    if (!addForm.description.trim() && !addForm.if_physical_where.trim()) {
+    if (!addForm.description.trim() && !addForm.location_on_body.trim()) {
       alert("Please add a description or where the pain is.");
       return;
     }
@@ -133,8 +133,8 @@ export default function AilmentsPage() {
       setAdding(true);
       await ProfileService.addMedicalCondition(
         user.email,
-        addForm.is_physical,
-        addForm.if_physical_where,
+        addForm.is_physio,
+        addForm.location_on_body,
         addForm.description,
         Number(addForm.pain_level)
       );
@@ -142,8 +142,8 @@ export default function AilmentsPage() {
       await loadAilments(user.email);
       // Reset & close
       setAddForm({
-        is_physical: true,
-        if_physical_where: "",
+        is_physio: true,
+        location_on_body: "",
         description: "",
         pain_level: 1,
       });
@@ -240,7 +240,7 @@ export default function AilmentsPage() {
                 </div>
                 <p className="text-black/80">
                   <span className="font-semibold">Where:</span>{" "}
-                  {mc.if_physical_where || "—"}
+                  {mc.location_on_body || "—"}
                 </p>
                 <p className="text-black/70 line-clamp-2 mt-1">
                   {mc.description || "No description provided."}
@@ -273,13 +273,13 @@ export default function AilmentsPage() {
                 <div>
                   <p className="text-black/60 text-sm">Physical</p>
                   <p className="text-black font-semibold">
-                    {active.is_physical ? "Yes" : "No"}
+                    {active.is_physio ? "Yes" : "No"}
                   </p>
                 </div>
                 <div>
                   <p className="text-black/60 text-sm">Where</p>
                   <p className="text-black font-semibold">
-                    {active.if_physical_where || "—"}
+                    {active.location_on_body || "—"}
                   </p>
                 </div>
                 <div>
@@ -305,9 +305,9 @@ export default function AilmentsPage() {
                   <input
                     id="isPhysical"
                     type="checkbox"
-                    checked={form.is_physical}
+                    checked={form.is_physio}
                     onChange={(e) =>
-                      setForm({ ...form, is_physical: e.target.checked })
+                      setForm({ ...form, is_physio: e.target.checked })
                     }
                     className="h-4 w-4"
                   />
@@ -323,9 +323,9 @@ export default function AilmentsPage() {
                   <input
                     type="text"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none bg-white/70 text-black"
-                    value={form.if_physical_where}
+                    value={form.location_on_body}
                     onChange={(e) =>
-                      setForm({ ...form, if_physical_where: e.target.value })
+                      setForm({ ...form, location_on_body: e.target.value })
                     }
                     placeholder="e.g., Left knee"
                   />
@@ -430,9 +430,9 @@ export default function AilmentsPage() {
                 <input
                   id="addIsPhysical"
                   type="checkbox"
-                  checked={addForm.is_physical}
+                  checked={addForm.is_physio}
                   onChange={(e) =>
-                    setAddForm({ ...addForm, is_physical: e.target.checked })
+                    setAddForm({ ...addForm, is_physio: e.target.checked })
                   }
                   className="h-4 w-4"
                 />
@@ -448,9 +448,9 @@ export default function AilmentsPage() {
                 <input
                   type="text"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none bg-white/70 text-black"
-                  value={addForm.if_physical_where}
+                  value={addForm.location_on_body}
                   onChange={(e) =>
-                    setAddForm({ ...addForm, if_physical_where: e.target.value })
+                    setAddForm({ ...addForm, location_on_body: e.target.value })
                   }
                   placeholder="e.g., Left knee"
                 />

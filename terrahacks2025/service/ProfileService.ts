@@ -12,8 +12,8 @@ export type UserProfile = {
 export type MedicalCondition = {
   id: number;
   email: string;
-  is_physical: boolean;
-  if_physical_where: string;
+  is_physio: boolean;
+  location_on_body: string;
   description: string;
   pain_level: number; // 1-10
   created_at?: string | null;
@@ -90,15 +90,15 @@ export const ProfileService = {
         }
     },
 
-    async addMedicalCondition(email: string, is_physical: boolean,if_physical_where: string,description: string, pain_level: number){
+    async addMedicalCondition(email: string, is_physio: boolean,location_on_body: string,description: string, pain_level: number){
         try {
             const { data, error } = await supabase
                 .from('medical_conditions')
                 .insert([
                     {
                         email: email,
-                        is_physical: is_physical,
-                        if_physical_where: if_physical_where,
+                        is_physio: is_physio,
+                        location_on_body: location_on_body,
                         description:description,
                         pain_level: pain_level
                     }
@@ -120,7 +120,7 @@ export const ProfileService = {
     async getMedicalConditionsByEmail(email: string) {
     const { data, error } = await supabase
         .from('medical_conditions')
-        .select('id, email, is_physical, if_physical_where, description, pain_level')
+        .select('id, email, is_physio, location_on_body, description, pain_level')
         .eq('email', email)
         .order('id', { ascending: false });
 
@@ -131,14 +131,14 @@ export const ProfileService = {
     async updateMedicalCondition(
     id: number,
     email: string,
-    fields: Partial<Pick<MedicalCondition, 'is_physical' | 'if_physical_where' | 'description' | 'pain_level'>>
+    fields: Partial<Pick<MedicalCondition, 'is_physio' | 'location_on_body' | 'description' | 'pain_level'>>
     ) {
     const { data, error } = await supabase
         .from('medical_conditions')
         .update(fields)
         .eq('id', id)
         .eq('email', email)
-        .select('id, email, is_physical, if_physical_where, description, pain_level')
+        .select('id, email, is_physio, location_on_body, description, pain_level')
         .single();
 
     if (error) throw error;
