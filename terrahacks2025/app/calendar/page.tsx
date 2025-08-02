@@ -18,10 +18,7 @@ export default function CalendarPage() {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [fetchingProfile, setFetchingProfile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [userSessions, setUserSessions] = useState<any[]>([]);
-  const [loadingSessions, setLoadingSessions] = useState(false);
-  const [medicalConditions, setMedicalConditions] = useState<MedicalCondition[]>([]);
-  const [loadingConditions, setLoadingConditions] = useState(false);
+ 
 
   useEffect(() => {
     if (!loading && !user) {
