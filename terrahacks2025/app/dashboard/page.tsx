@@ -15,6 +15,12 @@ export default function DashboardPage() {
   const [fetchingProfile, setFetchingProfile] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    age: '',
+    heightCm: '',
+    weightKg: ''
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -42,6 +48,17 @@ export default function DashboardPage() {
       })();
     }
   }, [user, loading, router]);
+
+  // Initialize edit form data when profile loads
+  useEffect(() => {
+    if (profile) {
+      setEditFormData({
+        age: profile.age?.toString() || '',
+        heightCm: profile.height_cm ? (profile.height_cm / 10).toString() : '',
+        weightKg: profile.weight_kg ? (profile.weight_kg / 1000).toString() : ''
+      });
+    }
+  }, [profile]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -116,7 +133,7 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 <h3 className="text-4xl font-bold text-black mb-2">Complete Your Profile</h3>
                 <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto"></div>
-                <p className="text-black/80 text-lg">Let's personalize your therapy experience</p>
+                <p className="text-black/80 text-lg">Let&apos;s personalize your therapy experience</p>
               </div>
             </div>
 
@@ -468,73 +485,9 @@ export default function DashboardPage() {
 
           {/* Dashboard Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Bio Data Card */}
-            <div className="group">
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-300/10 to-indigo-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
-                
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  
-                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-blue-600 transition-colors duration-300">
-                    Bio Data
-                  </h4>
-                  <p className="text-black/70 mb-6">
-                    View and manage your health metrics and personal information
-                  </p>
-                  
-                  <div className="inline-flex items-center justify-center w-full text-blue-600 font-semibold group-hover:text-blue-700 transition-colors duration-300">
-                    View Bio Data
-                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Ailments Card */}
-            <div className="group">
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-purple-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-300/10 to-pink-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
-                
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                  
-                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-indigo-600 transition-colors duration-300">
-                    Ailments
-                  </h4>
-                  <p className="text-black/70 mb-6">
-                    Track your symptoms and get personalized treatment recommendations
-                  </p>
-                  
-                  <div className="inline-flex items-center justify-center w-full text-indigo-600 font-semibold group-hover:text-indigo-700 transition-colors duration-300">
-                    Manage Ailments
-                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Therapy Sessions Card */}
             <div className="group">
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed-2">
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-pink-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-pink-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
@@ -563,6 +516,70 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+
+            {/* Planning Card */}
+            <div className="group">
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-300/10 to-indigo-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
+                
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  
+                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-blue-600 transition-colors duration-300">
+                    Planning
+                  </h4>
+                  <p className="text-black/70 mb-6">
+                    View your personalized exercise schedule and upcoming therapy sessions
+                  </p>
+                  
+                  <div className="inline-flex items-center justify-center w-full text-blue-600 font-semibold group-hover:text-blue-700 transition-colors duration-300">
+                    View Schedule
+                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Ailments Card */}
+            <div className="group">
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in-delayed-2">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-purple-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-400/10 to-purple-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-300/10 to-pink-400/10 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-500"></div>
+                
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  
+                  <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-indigo-600 transition-colors duration-300">
+                    Ailments
+                  </h4>
+                  <p className="text-black/70 mb-6">
+                    Track your symptoms and get personalized treatment recommendations
+                  </p>
+                  
+                  <div className="inline-flex items-center justify-center w-full text-indigo-600 font-semibold group-hover:text-indigo-700 transition-colors duration-300">
+                    Manage Ailments
+                    <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Profile Summary */}
@@ -571,48 +588,179 @@ export default function DashboardPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16"></div>
             
             <div className="relative z-10">
-              <h4 className="text-2xl font-bold text-black mb-6">Your Profile Summary</h4>
-              <div className="grid md:grid-cols-4 gap-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <p className="text-black/60 text-sm">Name</p>
-                  <p className="text-black font-semibold">{profile.name}</p>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <h4 className="text-2xl font-bold text-black">Your Profile Summary</h4>
+                  {isEditingProfile && (
+                    <div className="flex items-center space-x-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span>Editing</span>
+                    </div>
+                  )}
                 </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                {!isEditingProfile ? (
+                  <button
+                    onClick={() => setIsEditingProfile(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
+                    <span>Edit</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          setIsSubmitting(true);
+                                                                               await ProfileService.updateProfileFields(
+                            user.email,
+                            Number(editFormData.heightCm) * 10,
+                            Number(editFormData.weightKg) * 1000,
+                            Number(editFormData.age)
+                          );
+                          
+                          // Update local profile state
+                          if (profile) {
+                            setProfile({
+                              ...profile,
+                              age: Number(editFormData.age),
+                              height_cm: Number(editFormData.heightCm) * 10,
+                              weight_kg: Number(editFormData.weightKg) * 1000
+                            });
+                          }
+                          
+                          setIsEditingProfile(false);
+                        } catch (error) {
+                          console.error('Error updating profile:', error);
+                          // Show more detailed error information
+                          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+                          alert(`Failed to update profile: ${errorMessage}`);
+                        } finally {
+                          setIsSubmitting(false);
+                        }
+                      }}
+                      disabled={isSubmitting}
+                      className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Save</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingProfile(false);
+                        // Reset form data to original values
+                        if (profile) {
+                          setEditFormData({
+                            age: profile.age?.toString() || '',
+                            heightCm: profile.height_cm ? (profile.height_cm / 10).toString() : '',
+                            weightKg: profile.weight_kg ? (profile.weight_kg / 1000).toString() : ''
+                          });
+                        }
+                      }}
+                      className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span>Cancel</span>
+                    </button>
                   </div>
-                  <p className="text-black/60 text-sm">Age</p>
-                  <p className="text-black font-semibold">{profile.age} years</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <p className="text-black/60 text-sm">Height</p>
-                  <p className="text-black font-semibold">{profile.height_cm / 10} cm</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                    </svg>
-                  </div>
-                  <p className="text-black/60 text-sm">Weight</p>
-                  <p className="text-black font-semibold">{profile.weight_kg / 1000} kg</p>
-                </div>
+                )}
               </div>
+                              <div className="grid md:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <p className="text-black/60 text-sm">Name</p>
+                    <p className="text-black font-semibold">{profile.name}</p>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <p className="text-black/60 text-sm">Age</p>
+                    {isEditingProfile ? (
+                      <input
+                        type="number"
+                        value={editFormData.age}
+                        onChange={(e) => setEditFormData({...editFormData, age: e.target.value})}
+                        className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
+                        placeholder="Age"
+                        min="1"
+                        max="120"
+                      />
+                    ) : (
+                      <p className="text-black font-semibold">{profile.age} years</p>
+                    )}
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <p className="text-black/60 text-sm">Height</p>
+                    {isEditingProfile ? (
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={editFormData.heightCm}
+                        onChange={(e) => setEditFormData({...editFormData, heightCm: e.target.value})}
+                        className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
+                        placeholder="Height (cm)"
+                        min="50"
+                        max="250"
+                      />
+                    ) : (
+                      <p className="text-black font-semibold">{profile.height_cm / 10} cm</p>
+                    )}
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                      </svg>
+                    </div>
+                    <p className="text-black/60 text-sm">Weight</p>
+                    {isEditingProfile ? (
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={editFormData.weightKg}
+                        onChange={(e) => setEditFormData({...editFormData, weightKg: e.target.value})}
+                        className="w-full text-center text-black font-semibold bg-white/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl px-3 py-2 focus:border-blue-500 focus:outline-none transition-all duration-300 shadow-sm hover:shadow-md"
+                        placeholder="Weight (kg)"
+                        min="20"
+                        max="300"
+                      />
+                    ) : (
+                      <p className="text-black font-semibold">{profile.weight_kg / 1000} kg</p>
+                    )}
+                  </div>
+                </div>
             </div>
           </div>
         </main>

@@ -54,6 +54,32 @@ export const ProfileService = {
         }
     },
 
+    async updateProfileFields(email: string, height_cm: number, weight_kg: number, age: number) {
+        try {
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .update({
+                    height_cm: height_cm,
+                    weight_kg: weight_kg,
+                    age: age
+                })
+                .eq('email', email)
+                .select()
+
+            if (error) {
+                console.error("Error updating Profile fields:", error);
+                throw error;
+            }
+
+            console.log("Profile fields updated successfully:", data);
+            return data;
+        }
+        catch (error) {
+            console.error("An error occurred while updating Profile fields:", error);
+            throw error;
+        }
+    },
+
     async addMedicalCondition(email: string, is_physical: boolean,if_physical_where: string,description: string, pain_level: number){
         try {
             const { data, error } = await supabase
