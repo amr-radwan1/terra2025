@@ -180,6 +180,7 @@ export default function DashboardPage() {
 
       <label className="grid gap-1">
         <span className="text-sm">Pain Level (1–10, where 10 is severe)</span>
+
         <input
           name="pain_level"
           type="range"
@@ -187,11 +188,22 @@ export default function DashboardPage() {
           max={10}
           defaultValue={5}
           className="w-full"
+          onInput={(e) => {
+            const val = (e.currentTarget as HTMLInputElement).value;
+            const out = e.currentTarget.nextElementSibling as HTMLElement | null;
+            out?.querySelector(".curr")?.replaceChildren(val);
+          }}
         />
+
         <div className="flex justify-between text-xs text-gray-600">
-          <span>1 (Mild)</span><span>5</span><span>10 (Severe)</span>
+          <span>1 (Mild)</span>
+          <span>
+            Current: <strong className="curr">5</strong>
+          </span>
+          <span>10 (Severe)</span>
         </div>
       </label>
+
 
       <label className="grid gap-1">
         <span className="text-sm">Fitness Level</span>
