@@ -445,7 +445,7 @@ export default function DashboardPage() {
                         <p className="text-black/60 text-sm">{user.email}</p>
                       </div>
                       
-                                              <div className="py-2">
+                      <div className="py-2">
                           <button
                             onClick={() => {
                               // TODO: Implement profile picture change
@@ -621,7 +621,7 @@ export default function DashboardPage() {
                       onClick={async () => {
                         // Validate input values
                         const age = Number(editFormData.age);
-                        const heightM = Number(editFormData.heightM);
+                        const heightCm = Number(editFormData.heightCm);
                         const weightKg = Number(editFormData.weightKg);
 
                         if (!age || age < 1 || age > 120) {
@@ -629,7 +629,7 @@ export default function DashboardPage() {
                           return;
                         }
 
-                        if (!heightM || heightM < 0.5 || heightM > 2.5) {
+                        if (!heightCm || heightCm < 50 || heightCm > 250) {
                           alert('Please enter a valid height between 0.5 and 2.5 meters');
                           return;
                         }
@@ -643,7 +643,7 @@ export default function DashboardPage() {
                           setIsSubmitting(true);
                           await ProfileService.updateProfileFields(
                             user.email,
-                            heightM,
+                            heightCm,
                             weightKg,
                             age
                           );
