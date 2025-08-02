@@ -19,8 +19,7 @@ export default function CalendarPage() {
   const [fetchingProfile, setFetchingProfile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
  
-  console.log("User info: ",user);
-  console.log(getSessionsForUserByEmail(user.email))
+
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login?next=/calendar');
