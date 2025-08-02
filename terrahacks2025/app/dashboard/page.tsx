@@ -490,7 +490,17 @@ export default function DashboardPage() {
           <div className="text-center mb-12 animate-fade-in-up">
             <h3 className="text-4xl font-bold text-black mb-4">Your Therapy Dashboard</h3>
             <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mb-4"></div>
-            <p className="text-black/80 text-lg">Ready to start your wellness journey</p>
+            <p className="text-black/80 text-lg mb-6">Ready to start your wellness journey</p>
+            
+            {/* Your Progress Button */}
+            <Link href="/progress">
+              <button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-3 mx-auto">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Your Progress</span>
+              </button>
+            </Link>
           </div>
 
           {/* Dashboard Cards */}
