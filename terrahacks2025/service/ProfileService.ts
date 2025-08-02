@@ -6,6 +6,8 @@ export type UserProfile = {
   height_cm: number;
   weight_kg: number;
   age: number;
+  gender: string;
+  fitness_level: string;
   bio_setup: boolean;
 };
 
@@ -24,7 +26,7 @@ export const ProfileService = {
 
         const {data, error} = await supabase
             .from('user_profiles')
-            .select('email, name, height_cm, weight_kg, age, bio_setup')    //DO NOT TAKE id for safetyish
+            .select('email, name, height_cm, weight_kg, age, gender, fitness_level, bio_setup')    //DO NOT TAKE id for safetyish
             .eq('email', email)
             .maybeSingle();
         if (error){
