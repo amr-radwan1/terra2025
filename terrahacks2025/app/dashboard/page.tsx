@@ -8,12 +8,13 @@ import Link from 'next/link';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [fetchingProfile, setFetchingProfile] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -41,6 +42,24 @@ export default function DashboardPage() {
       })();
     }
   }, [user, loading, router]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.user-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   if (loading) {
     return (
@@ -381,8 +400,58 @@ export default function DashboardPage() {
                   <p className="text-black font-semibold">Welcome back,</p>
                   <p className="text-black/80 text-sm">{profile.name}</p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">{profile.name.charAt(0).toUpperCase()}</span>
+                
+                {/* User Avatar with Dropdown */}
+                <div className="relative user-menu-container">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    <span className="text-white font-bold text-sm">{profile.name.charAt(0).toUpperCase()}</span>
+                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  {showUserMenu && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden z-50 animate-dropdown">
+                      <div className="p-4 border-b border-gray-100">
+                        <p className="text-black font-semibold">{profile.name}</p>
+                        <p className="text-black/60 text-sm">{user.email}</p>
+                      </div>
+                      
+                      <div className="py-2">
+                        <button
+                          onClick={() => {
+                            // TODO: Implement profile picture change
+                            alert('Profile picture change feature coming soon!');
+                            setShowUserMenu(false);
+                          }}
+                          className="w-full px-4 py-3 text-left text-black hover:bg-blue-50/50 transition-colors duration-200 flex items-center space-x-3"
+                        >
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span>Change Profile Picture</span>
+                        </button>
+                        
+                        <button
+                          onClick={async () => {
+                            try {
+                              await signOut();
+                              router.push('/');
+                            } catch (error) {
+                              console.error('Error signing out:', error);
+                            }
+                          }}
+                          className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50/50 transition-colors duration-200 flex items-center space-x-3"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -594,6 +663,11 @@ export default function DashboardPage() {
           animation-delay: 0.4s;
         }
         
+        @keyframes dropdown {
+          0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
         .animate-float { animation: float 6s ease-in-out infinite; }
         .animate-float-delayed { animation: float-delayed 8s ease-in-out infinite; }
         .animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
@@ -602,6 +676,7 @@ export default function DashboardPage() {
         .animate-card-slide-in { animation: card-slide-in 0.8s ease-out forwards; }
         .animate-card-slide-in-delayed { animation: card-slide-in-delayed 0.8s ease-out forwards; }
         .animate-card-slide-in-delayed-2 { animation: card-slide-in-delayed-2 0.8s ease-out forwards; }
+        .animate-dropdown { animation: dropdown 0.2s ease-out forwards; }
       `}</style>
     </div>
   );
