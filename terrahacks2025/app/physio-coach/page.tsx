@@ -98,12 +98,12 @@ export default function PhysioCoachPage() {
         <div className="max-w-4xl mx-auto">
           <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 mb-4">
             <div className="flex items-center justify-between">
-              <div>
+              {/* <div>
                 <h1 className="text-2xl font-bold text-gray-800 mb-2">
                   {exerciseData.exerciseName}
                 </h1>
                 <p className="text-gray-600">{exerciseData.description}</p>
-              </div>
+              </div> */}
               <div className="flex gap-4">
                 <button
                   onClick={() => router.push('/body-map')}

@@ -213,10 +213,19 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       timestamp: new Date().toLocaleTimeString()
     });
     
+    // Primary check: both script callbacks fired
     if (scriptsLoaded.camera && scriptsLoaded.pose && window.Camera && window.Pose) {
-      console.log('✅ All MediaPipe scripts loaded successfully');
+      console.log('✅ All MediaPipe scripts loaded successfully (via callbacks)');
       setIsMediaPipeLoaded(true);
-    } else {
+    } 
+    // Fallback check: classes are available on window object even if callbacks didn't fire
+    else if (window.Camera && window.Pose && !isMediaPipeLoaded) {
+      console.log('⚠️ Script callbacks missed, but classes are available - using fallback detection');
+      setIsMediaPipeLoaded(true);
+      // Update the script loaded state to reflect reality
+      setScriptsLoaded({ camera: true, pose: true });
+    } 
+    else {
       console.log('⏳ Waiting for MediaPipe scripts...', {
         missing: {
           cameraScript: !scriptsLoaded.camera,
@@ -226,7 +235,45 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
         }
       });
     }
-  }, [scriptsLoaded]);
+  }, [scriptsLoaded, isMediaPipeLoaded]);
+
+  // Immediate check on mount in case scripts are already loaded
+  useEffect(() => {
+    console.log('🚀 Component mounted, checking if scripts are already loaded...');
+    if (window.Camera && window.Pose && !isMediaPipeLoaded) {
+      console.log('🎯 Scripts were already loaded before component mount!');
+      setIsMediaPipeLoaded(true);
+      setScriptsLoaded({ camera: true, pose: true });
+    }
+  }, []);
+
+  // Periodic fallback check for script loading
+  useEffect(() => {
+    let attempts = 0;
+    const maxAttempts = 5; // Check 5 times over 10 seconds
+    
+    const interval = setInterval(() => {
+      attempts++;
+      console.log(`🔄 Periodic check attempt ${attempts}/${maxAttempts}:`, {
+        isMediaPipeLoaded,
+        windowCamera: !!window.Camera,
+        windowPose: !!window.Pose,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      
+      if (!isMediaPipeLoaded && window.Camera && window.Pose) {
+        console.log(`✅ PERIODIC FALLBACK SUCCESS on attempt ${attempts}: Scripts detected!`);
+        setIsMediaPipeLoaded(true);
+        setScriptsLoaded({ camera: true, pose: true });
+        clearInterval(interval);
+      } else if (attempts >= maxAttempts) {
+        console.log('⏰ Periodic checks completed, stopping interval');
+        clearInterval(interval);
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [isMediaPipeLoaded]);
 
   // Debug DOM elements readiness
   useEffect(() => {
@@ -250,6 +297,13 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
         timestamp: new Date().toLocaleTimeString()
       });
       
+      // Additional fallback check after 5 seconds
+      if (!isMediaPipeLoaded && window.Camera && window.Pose) {
+        console.log('🔧 APPLYING 5-SECOND FALLBACK: Classes available but not marked as loaded');
+        setIsMediaPipeLoaded(true);
+        setScriptsLoaded({ camera: true, pose: true });
+      }
+      
       if (isMediaPipeLoaded && videoRef.current && !window.Camera) {
         console.log('⚠️ ISSUE DETECTED: MediaPipe marked as loaded but Camera class not available');
       }
@@ -260,7 +314,7 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
     }, 5000);
     
     return () => clearTimeout(timeout);
-  }, []);
+  }, [isMediaPipeLoaded, scriptsLoaded]);
 
   // Function to generate exercise prescription using Gemini
   const generateExercisePrescription = async (exercise: ExerciseData) => {
@@ -1388,6 +1442,7 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       {/* Load MediaPipe scripts */}
       <Script
         src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+        strategy="afterInteractive"
         onLoad={() => {
           console.log('📦 Camera utils script loaded at', new Date().toLocaleTimeString());
           setScriptsLoaded(prev => ({ ...prev, camera: true }));
@@ -1395,15 +1450,28 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
         onError={(error) => {
           console.error('❌ Failed to load camera utils script:', error);
         }}
+        onReady={() => {
+          console.log('📦 Camera utils script ready');
+          if (window.Camera) {
+            setScriptsLoaded(prev => ({ ...prev, camera: true }));
+          }
+        }}
       />
       <Script
         src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"
+        strategy="afterInteractive"
         onLoad={() => {
           console.log('📦 Pose script loaded at', new Date().toLocaleTimeString());
           setScriptsLoaded(prev => ({ ...prev, pose: true }));
         }}
         onError={(error) => {
           console.error('❌ Failed to load pose script:', error);
+        }}
+        onReady={() => {
+          console.log('📦 Pose script ready');
+          if (window.Pose) {
+            setScriptsLoaded(prev => ({ ...prev, pose: true }));
+          }
         }}
       />
 
