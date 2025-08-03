@@ -224,7 +224,7 @@ export default function CalendarPage() {
           <div className="text-center mb-8 animate-fade-in-up">
             <h3 className="text-3xl font-bold text-black mb-3">Your Exercise Calendar</h3>
             <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mb-3"></div>
-            <p className="text-black/70 text-base">Your calendar gets updated every TWO WEEKS to accomade your progress</p>
+            <p className="text-black/70 text-base">Your calendar gets updated every TWO WEEKS to accommodate your progress</p>
           </div>
 
           {/* Calendar Component */}

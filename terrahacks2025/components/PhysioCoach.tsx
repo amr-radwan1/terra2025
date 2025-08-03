@@ -389,6 +389,7 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
 
     let pose: any = null;
     let camera: any = null;
+    let isCleanedUp = false;
 
     const initializeMediaPipe = async () => {
       try {
@@ -420,22 +421,34 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
         pose.onResults(onResults);
 
         // Initialize camera
-        if (videoRef.current) {
+        if (videoRef.current && !isCleanedUp) {
           camera = new Camera(videoRef.current, {
             onFrame: async () => {
-              if (videoRef.current) {
-                await pose.send({ image: videoRef.current });
+              if (videoRef.current && pose && !isCleanedUp) {
+                try {
+                  await pose.send({ image: videoRef.current });
+                } catch (error) {
+                  // Suppress MediaPipe cleanup errors
+                  const errorMessage = error instanceof Error ? error.message : String(error);
+                  if (!errorMessage.includes('deleted object') && !isCleanedUp) {
+                    console.error('MediaPipe pose error:', error);
+                  }
+                }
               }
             },
             width: 640,
             height: 480
           });
           await camera.start();
-          setFeedback('Position yourself in front of the camera');
+          if (!isCleanedUp) {
+            setFeedback('Position yourself in front of the camera');
+          }
         }
       } catch (error) {
         console.error('Error initializing MediaPipe:', error);
-        setFeedback('Error starting camera. Please check permissions.');
+        if (!isCleanedUp) {
+          setFeedback('Error starting camera. Please check permissions.');
+        }
       }
     };
 
@@ -449,29 +462,39 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
     };
 
     const onResults = (results: any) => {
+      if (isCleanedUp) return; // Skip processing if component is being cleaned up
+      
       const canvas = canvasRef.current;
       if (!canvas) return;
       
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw video frame
-      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      try {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw video frame
+        ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-      if (results.poseLandmarks) {
-        drawPose(ctx, results.poseLandmarks);
-        
-        // Determine if this is an arm or leg exercise and call appropriate analysis
-        const exercise = currentExercise || defaultExercise;
-        const bodyPart = getExerciseBodyPart(exercise);
-        
-        if (bodyPart === 'legs') {
-          analyzeLegExercise(results.poseLandmarks);
-        } else {
-          analyzeArmExercise(results.poseLandmarks);
+        if (results.poseLandmarks) {
+          drawPose(ctx, results.poseLandmarks);
+          
+          // Determine if this is an arm or leg exercise and call appropriate analysis
+          const exercise = currentExercise || defaultExercise;
+          const bodyPart = getExerciseBodyPart(exercise);
+          
+          if (bodyPart === 'legs') {
+            analyzeLegExercise(results.poseLandmarks);
+          } else {
+            analyzeArmExercise(results.poseLandmarks);
+          }
+        }
+      } catch (error) {
+        // Suppress MediaPipe rendering errors during cleanup
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (!errorMessage.includes('deleted object') && !isCleanedUp) {
+          console.error('MediaPipe rendering error:', error);
         }
       }
     };
@@ -973,11 +996,34 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
     initializeMediaPipe();
 
     return () => {
+      isCleanedUp = true; // Set cleanup flag first
+      
+      // Stop camera first
       if (camera) {
-        camera.stop();
+        try {
+          camera.stop();
+        } catch (error) {
+          // Suppress camera cleanup errors
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          if (!errorMessage.includes('deleted object')) {
+            console.warn('Camera cleanup warning:', error);
+          }
+        }
       }
+      
+      // Close pose detection with delay to ensure camera is stopped
       if (pose) {
-        pose.close();
+        setTimeout(() => {
+          try {
+            pose.close();
+          } catch (error) {
+            // Suppress pose cleanup errors
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (!errorMessage.includes('deleted object')) {
+              console.warn('Pose cleanup warning:', error);
+            }
+          }
+        }, 100);
       }
     };
   }, [isMediaPipeLoaded, currentExercise, exerciseStarted]);
