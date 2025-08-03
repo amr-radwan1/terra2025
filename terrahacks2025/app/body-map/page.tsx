@@ -308,9 +308,9 @@ export default function BodyMapPage() {
       const exerciseData = apiResponse.success ? apiResponse.data : apiResponse;
       console.log('Body-map: Exercise data to store:', exerciseData);
 
-      // Store the exercise data in sessionStorage and navigate to physio coach
+      // Store the exercise data in sessionStorage and navigate to exercise session
       sessionStorage.setItem('generatedExercise', JSON.stringify(exerciseData));
-      router.push('/physio-coach');
+      router.push('/exercise-session');
 
     } catch (error) {
       console.error('Error generating exercise:', error);

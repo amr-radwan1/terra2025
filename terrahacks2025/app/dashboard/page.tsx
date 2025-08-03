@@ -507,7 +507,7 @@ export default function DashboardPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Therapy Sessions Card */}
             <div className="group h-full">
-              <Link href="/physio-coach">
+              <Link href="/body-map">
                 <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 border border-white/20 relative overflow-hidden animate-card-slide-in h-full flex flex-col cursor-pointer">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-pink-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-pink-500/10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-500"></div>
@@ -521,10 +521,10 @@ export default function DashboardPage() {
                 </div>
 
                 <h4 className="text-2xl font-bold text-black mb-3 group-hover:text-purple-600 transition-colors duration-300">Exercise Sessions</h4>
-                <p className="text-black/70 mb-6">Start your guided exercise sessions with real-time feedback</p>
+                <p className="text-black/70 mb-6">Select pain area to get personalized exercise recommendations with real-time feedback</p>
 
                 <div className="inline-flex items-center justify-center w-full text-purple-600 font-semibold group-hover:text-purple-700 transition-colors duration-300 mt-auto">
-                    Start Session
+                    Start Assessment
                     <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
