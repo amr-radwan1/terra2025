@@ -45,6 +45,8 @@ export default function CalendarPage() {
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklyScheduleData | null>(null);
   const [loadingSchedule, setLoadingSchedule] = useState(false);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [completingSession, setCompletingSession] = useState<string | null>(null);
+  const [completionMessage, setCompletionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -164,6 +166,65 @@ export default function CalendarPage() {
     }
   };
 
+  const handleMarkComplete = async (session: ExerciseSession) => {
+    if (!user?.email) return;
+    
+    setCompletingSession(session.id);
+    setCompletionMessage(null);
+    
+    try {
+      console.log('Marking session as complete:', { sessionId: session.id, userEmail: user.email });
+      
+      const response = await fetch('/api/complete-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: session.id,
+          userEmail: user.email
+        }),
+      });
+
+      const result = await response.json();
+      console.log('Complete session response:', result);
+
+      if (!response.ok) {
+        throw new Error(result.error || `HTTP error! status: ${response.status}`);
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to complete session');
+      }
+
+      // Update the session in state to show as completed
+      setWeeklySchedule(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          weeklySchedule: prev.weeklySchedule.map(s => 
+            s.id === session.id ? { ...s, completed: true } : s
+          )
+        };
+      });
+
+      // Show success message
+      setCompletionMessage(result.data.message);
+      
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        setCompletionMessage(null);
+      }, 5000);
+
+    } catch (error) {
+      console.error('Error completing session:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to mark session as complete: ${errorMessage}`);
+    } finally {
+      setCompletingSession(null);
+    }
+  };
+
   if (loading || fetchingProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
@@ -193,6 +254,19 @@ export default function CalendarPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+      {/* Completion Success Message */}
+      {completionMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl border border-white/20 animate-bounce">
+          <div className="flex items-center space-x-3">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <p className="font-bold text-lg">Session Completed!</p>
+              <p className="text-sm opacity-90">{completionMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-blue-400/30 to-indigo-500/30 rounded-full blur-xl animate-float"></div>
@@ -377,12 +451,33 @@ export default function CalendarPage() {
                       </div>
 
                       {!session.completed ? (
-                        <button
-                          onClick={() => handleStartSession(session)}
-                          className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                        >
-                          Start Session
-                        </button>
+                        <div className="space-y-3">
+                          <button
+                            onClick={() => handleStartSession(session)}
+                            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                          >
+                            Start Session
+                          </button>
+                          <button
+                            onClick={() => handleMarkComplete(session)}
+                            disabled={completingSession === session.id}
+                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {completingSession === session.id ? (
+                              <div className="flex items-center justify-center space-x-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Marking Complete...</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center space-x-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>Mark as Complete</span>
+                              </div>
+                            )}
+                          </button>
+                        </div>
                       ) : (
                         <div className="w-full bg-gradient-to-r from-green-400 to-emerald-500 text-white font-semibold py-3 px-4 rounded-2xl text-center">
                           ✓ Completed

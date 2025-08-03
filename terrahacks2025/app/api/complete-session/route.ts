@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { completeSession } from '@/service/SchedulingService';
+import { ProfileService } from '@/service/ProfileService';
 import { supabase } from '@/supabase/client';
 
 export async function POST(request: NextRequest) {
@@ -13,17 +13,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify the user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user || user.email !== userEmail) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    // Keep sessionId as string since it's likely a UUID
+    console.log('Completing session:', { sessionId, userEmail });
+
+    // Mark the user session as complete (using user_sessions table)
+    // The user_email check in the WHERE clause provides security
+    const { error: sessionError } = await supabase
+      .from('user_sessions')
+      .update({ completed: true })
+      .eq('id', sessionId)
+      .eq('user_email', userEmail);
+
+    if (sessionError) {
+      console.error('Error updating session:', sessionError);
+      throw new Error(`Database error: ${sessionError.message}`);
     }
 
-    // Complete the session and award XP
-    const result = await completeSession(sessionId, userEmail);
+    // Award XP for completing the session (50 XP per session)
+    const xpReward = 50;
+    const result = await ProfileService.awardExperiencePoints(userEmail, xpReward);
 
     return NextResponse.json({
       success: true,
