@@ -166,6 +166,32 @@ export default function ExercisesPage() {
         .single();
 
       if (error) throw error;
+      
+      // Update the exercise in existing incomplete sessions
+      try {
+        const response = await fetch('/api/update-exercise-in-sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            exerciseId: active.id,
+            userEmail: user.email,
+          }),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          console.error('Failed to update exercise in sessions:', result.error);
+          // Continue with the flow even if session update fails
+        } else {
+          console.log('Exercise updated in sessions:', result.message);
+        }
+      } catch (sessionError) {
+        console.error('Error updating sessions:', sessionError);
+        // Continue with the flow even if session update fails
+      }
+      
       setExercises((prev) => prev.map((p) => (p.id === data.id ? data : p)));
       setEditMode(false);
     } catch (e: any) {
@@ -180,6 +206,32 @@ export default function ExercisesPage() {
     if (!confirm('Delete this exercise? This cannot be undone.')) return;
     try {
       setDeleting(true);
+      
+      // First, remove the exercise from existing incomplete sessions
+      try {
+        const response = await fetch('/api/remove-exercise-from-sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            exerciseId: active.id,
+            userEmail: user.email,
+          }),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          console.error('Failed to remove exercise from sessions:', result.error);
+          // Continue with deletion even if session update fails
+        } else {
+          console.log('Exercise removed from sessions:', result.message);
+        }
+      } catch (sessionError) {
+        console.error('Error removing exercise from sessions:', sessionError);
+        // Continue with deletion even if session update fails
+      }
+      
       const { error } = await supabase
         .from('user_exercises')
         .delete()
@@ -221,6 +273,31 @@ export default function ExercisesPage() {
         .single();
 
       if (error) throw error;
+      
+      // Add the exercise to existing incomplete sessions
+      try {
+        const response = await fetch('/api/add-exercise-to-sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            exerciseId: data.id,
+            userEmail: user.email,
+          }),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          console.error('Failed to add exercise to sessions:', result.error);
+          // Continue with the flow even if session update fails
+        } else {
+          console.log('Exercise added to sessions:', result.message);
+        }
+      } catch (sessionError) {
+        console.error('Error updating sessions:', sessionError);
+        // Continue with the flow even if session update fails
+      }
       
       // Refresh list
       await loadExercises(user.email);
