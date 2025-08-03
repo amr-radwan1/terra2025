@@ -342,7 +342,7 @@ export default function CalendarPage() {
                           <h5 className="text-lg font-bold text-black group-hover:text-blue-600 transition-colors duration-300">
                             {session.day} Session
                           </h5>
-                          <p className="text-sm text-black/60">{new Date(session.date).toLocaleDateString()}</p>
+                          {/* <p className="text-sm text-black/60">{new Date(session.date).toLocaleDateString()}</p> */}
                         </div>
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                           session.completed 

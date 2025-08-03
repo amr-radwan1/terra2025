@@ -129,10 +129,12 @@ export async function POST(request: NextRequest) {
   Don't suggest anything that requires depth such as arm swings forward and backward, because only x and y values are available. Something like
   bicep curl is fine.
   If asked for a leg exercise, suggest seated knee extension.
+  If asked for a left shoulder exercise give forward arm raise.
 
   CRITICAL - ANGLE CALCULATION SYSTEM:
   Our pose analysis system calculates angles using 3 points: Point1 → Vertex → Point2
   The angle is measured at the VERTEX (middle point) between the two lines formed.
+
 
   HOW ANGLES ARE CALCULATED:
   - We use the formula: angle = arctan2(Point2.y - Vertex.y, Point2.x - Vertex.x) - arctan2(Point1.y - Vertex.y, Point1.x - Vertex.x)
@@ -216,7 +218,7 @@ export async function POST(request: NextRequest) {
      - points=[23, 11, 13] (Hip → Left Shoulder → Left Elbow)
      - startingPosition=[0,45] (arm down/resting)
      - targetRange=[90,180] (arm horizontal to up)
-     - optimalPeak=[160,180] (nearly straight up)
+     - optimalPeak=[140, 160] (nearly straight up)
      - repThresholds: liftingMin=90, loweringMax=60, restMax=30
 
   2. BICEP CURL (elbow flexion):
@@ -230,7 +232,7 @@ export async function POST(request: NextRequest) {
      - points=[23, 11, 13] (Hip → Shoulder → Elbow)
      - startingPosition=[0,30] (arm at side)
      - targetRange=[90,180] (horizontal to up)
-     - optimalPeak=[160,180] (nearly overhead)
+     - optimalPeak=[140,160] (nearly overhead)
      - repThresholds: liftingMin=90, loweringMax=60, rest=30
 
   DETECTION SYSTEM: Our system automatically detects which arm (left/right) is being used based on movement and adjusts the landmark indices accordingly.

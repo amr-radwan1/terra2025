@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import PhysioCoach from '@/components/PhysioCoach';
 
 interface ExerciseData {
@@ -98,5 +99,49 @@ export default function ExerciseSessionPage() {
     );
   }
 
-  return <PhysioCoach preloadedExercise={exerciseData} />;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Bar */}
+      <nav className="w-full bg-white/90 backdrop-blur-xl border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+          <Link href="/dashboard" className="group">
+            <div className="relative">
+              <h1 className="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
+                Freesio
+              </h1>
+              <h2 className="text-lg font-black text-black group-hover:scale-105 transition-transform duration-300">
+                Therapist
+              </h2>
+              <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            </div>
+          </Link>
+          
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-medium rounded-xl transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5v14l11-7z" />
+              </svg>
+              <span>Dashboard</span>
+            </Link>
+            <Link
+              href="/body-map"
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-medium rounded-xl transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>Body Assessment</span>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* PhysioCoach Component */}
+      <PhysioCoach preloadedExercise={exerciseData} />
+    </div>
+  );
 }

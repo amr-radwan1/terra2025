@@ -353,11 +353,11 @@ export default function BodyMapPage() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           {/* Return to Ailments Button */}
           <div className="flex justify-end mb-6">
-            <Link href="/ailments" className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+            <Link href="/dashboard" className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              <span>Return to Ailments</span>
+              <span>Back to Dashboard</span>
             </Link>
           </div>
           <div className="text-center mb-12 animate-fade-in-up">
@@ -692,7 +692,7 @@ export default function BodyMapPage() {
               {selectedZones.length > 0 ? (
                 <div className="space-y-6">
                   {/* Action Buttons - Top */}
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl p-6 shadow-2xl border border-white/20 relative overflow-hidden">
+                  {/* <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl p-6 shadow-2xl border border-white/20 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-400/20"></div>
                     <div className="relative z-10 text-center">
                       <h4 className="text-xl font-bold text-white mb-3">Save Your Pain Assessment</h4>
@@ -716,7 +716,7 @@ export default function BodyMapPage() {
                         )}
                       </button>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Selected Zones Information */}
                   {selectedZones.map((zone) => (
