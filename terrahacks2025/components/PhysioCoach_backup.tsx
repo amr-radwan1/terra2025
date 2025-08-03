@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
+import UserProfileForm from './UserProfileForm';
 
 // Declare MediaPipe global types
 declare global {
@@ -46,117 +47,6 @@ interface PhysioCoachProps {
   preloadedExercise?: ExerciseData;
 }
 
-// YouTube Demo Component
-function YouTubeDemo({ exerciseName, isVisible }: { exerciseName: string; isVisible: boolean }) {
-  const [videoId, setVideoId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isVisible) return;
-    
-    const searchYouTube = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // Create search query for physiotherapy exercise
-        const searchQuery = `${exerciseName} physiotherapy exercise demonstration proper form`;
-        
-        // Use YouTube search API alternative (you could also use YouTube Data API)
-        const response = await fetch(`/api/youtube-search?q=${encodeURIComponent(searchQuery)}`);
-        
-        if (!response.ok) {
-          // Fallback: Use predefined video IDs for common exercises
-          const fallbackVideos: { [key: string]: string } = {
-            'shoulder abduction': 'x5F5kW8qj3U', // Physical therapy shoulder abduction
-            'shoulder flexion': 'mGj8HQ0_HYc', // Shoulder flexion exercise
-            'bicep curl': 'ykJG6cHPB_M', // Proper bicep curl form
-            'arm curl': 'ykJG6cHPB_M', // Same as bicep curl
-            'pendulum': 'FhCCl0qsB4E', // Pendulum exercise for shoulder
-            'leg raise': 'JeWkFhVKSx4', // Leg raise exercise
-            'default': 'x5F5kW8qj3U' // Default shoulder exercise
-          };
-          
-          const key = Object.keys(fallbackVideos).find(k => 
-            exerciseName.toLowerCase().includes(k)
-          ) || 'default';
-          
-          setVideoId(fallbackVideos[key]);
-          setLoading(false);
-          return;
-        }
-        
-        const data = await response.json();
-        if (data.videoId) {
-          setVideoId(data.videoId);
-        } else {
-          throw new Error('No video found');
-        }
-      } catch (err) {
-        console.error('Error fetching YouTube video:', err);
-        setError('Could not load demonstration video');
-        // Use fallback
-        setVideoId('x5F5kW8qj3U'); // Default shoulder exercise video
-      }
-      
-      setLoading(false);
-    };
-
-    searchYouTube();
-  }, [exerciseName, isVisible]);
-
-  if (!isVisible) return null;
-
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h3 className="text-lg font-semibold mb-3 text-gray-800">
-        Exercise Demonstration
-      </h3>
-      
-      {loading && (
-        <div className="flex items-center justify-center h-48 bg-gray-100 rounded-lg">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-600">Loading demonstration...</p>
-          </div>
-        </div>
-      )}
-      
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
-      )}
-      
-      {videoId && !loading && (
-        <div className="relative">
-          <div style={{ paddingBottom: '56.25%', position: 'relative', height: 0 }}>
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}?start=10&rel=0&modestbranding=1`}
-              title={`${exerciseName} demonstration`}
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                borderRadius: '8px'
-              }}
-            />
-          </div>
-          <p className="mt-2 text-xs text-gray-500 text-center">
-            Watch this demonstration to understand proper form
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachProps = {}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -174,11 +64,11 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
   const [scriptsLoaded, setScriptsLoaded] = useState({ camera: false, pose: false });
   
   // New state for dynamic exercise system
+  const [showProfileForm, setShowProfileForm] = useState(false);
   const [currentExercise, setCurrentExercise] = useState<ExerciseData | null>(null);
   const [isExerciseActive, setIsExerciseActive] = useState(false);
   const [detectedArm, setDetectedArm] = useState<'left' | 'right'>('left');
   const [exerciseStarted, setExerciseStarted] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
 
   // Set MediaPipe as loaded when both scripts are loaded
   useEffect(() => {
@@ -201,6 +91,18 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       setFeedback(`Exercise loaded: ${preloadedExercise.exerciseName}. Click "Start Exercise" to begin.`);
     }
   }, [preloadedExercise]);
+
+  // Handler for exercise generation
+  const handleExerciseGenerated = (exerciseData: ExerciseData) => {
+    setCurrentExercise(exerciseData);
+    setIsExerciseActive(true);
+    setRepCount(0); // Reset rep count for new exercise
+    repCounterRef.current = 0;
+    hasReachedPeakRef.current = false;
+    lastStateRef.current = 'ready';
+    setExerciseStarted(false);
+    setFeedback(`Exercise loaded: ${exerciseData.exerciseName}. Click "Start Exercise" to begin.`);
+  };
 
   // Default exercise data (fallback)
   const defaultExercise: ExerciseData = {
@@ -857,8 +759,15 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       />
 
       {/* User Profile Form Modal */}
+      {showProfileForm && (
+        <UserProfileForm
+          onExerciseGenerated={handleExerciseGenerated}
+          onClose={() => setShowProfileForm(false)}
+        />
+      )}
+      
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -868,7 +777,32 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
               {currentExercise ? currentExercise.exerciseName : 'Shoulder Abduction Exercise'} - Real-time Form Analysis
             </p>
             
+            {/* Control Buttons */}
             <div className="flex justify-center gap-4 mt-4">
+              {!preloadedExercise && (
+                <button
+                  onClick={() => setShowProfileForm(true)}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Get Personalized Exercise
+                </button>
+              )}
+              {currentExercise && !preloadedExercise && (
+                <button
+                  onClick={() => {
+                    setCurrentExercise(null);
+                    setRepCount(0);
+                    repCounterRef.current = 0;
+                    hasReachedPeakRef.current = false;
+                    lastStateRef.current = 'ready';
+                    setExerciseStarted(false);
+                    setFeedback('Position yourself in front of the camera');
+                  }}
+                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Use Default Exercise
+                </button>
+              )}
               <button
                 onClick={handleStartExercise}
                 className={`px-6 py-2 rounded-lg transition-colors ${
@@ -878,12 +812,6 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
                 }`}
               >
                 {exerciseStarted ? 'Stop Exercise' : 'Start Exercise'}
-              </button>
-              <button
-                onClick={() => setShowDemo(!showDemo)}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                {showDemo ? 'Hide Demo' : 'Show Demo'}
               </button>
             </div>
           </div>
@@ -922,42 +850,8 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
                     <div className="text-xs">REPS</div>
                   </div>
                 </div>
-
-                {/* Target Ranges Overlay */}
-                <div className="absolute bottom-4 right-4 bg-black bg-opacity-80 text-white px-3 py-2 rounded text-xs">
-                  <div className="font-semibold mb-1">Target Ranges</div>
-                  {(() => {
-                    const ranges = currentExercise?.targetRanges || defaultExercise.targetRanges;
-                    return (
-                      <div className="space-y-1">
-                        <div className="flex justify-between gap-3">
-                          <span className="text-blue-300">Start:</span>
-                          <span>{ranges.startingPosition[0]}-{ranges.startingPosition[1]}°</span>
-                        </div>
-                        <div className="flex justify-between gap-3">
-                          <span className="text-green-300">Target:</span>
-                          <span>{ranges.targetRange[0]}-{ranges.targetRange[1]}°</span>
-                        </div>
-                        <div className="flex justify-between gap-3">
-                          <span className="text-purple-300">Peak:</span>
-                          <span>{ranges.optimalPeak[0]}-{ranges.optimalPeak[1]}°</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
               </div>
             </div>
-
-            {/* YouTube Demo */}
-            {showDemo && (
-              <div className="mt-6">
-                <YouTubeDemo 
-                  exerciseName={currentExercise?.exerciseName || defaultExercise.exerciseName}
-                  isVisible={showDemo}
-                />
-              </div>
-            )}
           </div>
 
           {/* Feedback Panel */}
@@ -984,10 +878,10 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
                 Exercise Progress
               </h3>
               <div className="space-y-3">
-                {/* <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Repetitions:</span>
                   <span className="text-2xl font-bold text-blue-600">{repCount}</span>
-                </div> */}
+                </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Current Phase:</span>
                   <span className={`px-2 py-1 rounded text-sm font-medium ${
@@ -999,7 +893,7 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
                     {exerciseState.charAt(0).toUpperCase() + exerciseState.slice(1)}
                   </span>
                 </div>
-                {/* <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center">
                   <span className="text-gray-600">Active Limb:</span>
                   <span className="text-sm font-medium text-gray-800 capitalize">
                     {(() => {
@@ -1008,7 +902,7 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
                       return `${detectedArm} ${bodyPart === 'legs' ? 'leg' : 'arm'}`;
                     })()}
                   </span>
-                </div> */}
+                </div>
               </div>
             </div>
 
@@ -1030,6 +924,34 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
                 ))}
               </div>
             </div>
+
+            {/* Target Ranges */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+                Target Ranges
+              </h3>
+              <div className="space-y-2 text-sm">
+                {(() => {
+                  const ranges = currentExercise?.targetRanges || defaultExercise.targetRanges;
+                  return (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-black">Starting Position:</span>
+                        <span className="text-blue-600">{ranges.startingPosition[0]}-{ranges.startingPosition[1]}°</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-black">Target Range:</span>
+                        <span className="text-green-600">{ranges.targetRange[0]}-{ranges.targetRange[1]}°</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-black">Optimal Peak:</span>
+                        <span className="text-purple-600">{ranges.optimalPeak[0]}-{ranges.optimalPeak[1]}°</span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1037,7 +959,7 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
         <div className="mt-6 bg-white rounded-lg shadow-lg p-4">
           <div className="text-center text-sm text-gray-600">
             <p className="mb-2">
-              <strong>Tips:</strong> Keep your core engaged, avoid shrugging your shoulders, 
+              <strong>Pro Tips:</strong> Keep your core engaged, avoid shrugging your shoulders, 
               and maintain a slow, controlled movement throughout the exercise. Reach the optimal peak angle to count a rep!
             </p>
             <p className="text-xs text-gray-500">

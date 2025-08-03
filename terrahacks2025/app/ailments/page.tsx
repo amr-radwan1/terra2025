@@ -32,6 +32,7 @@ export default function AilmentsPage() {
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [generatingExercise, setGeneratingExercise] = useState(false);
 
   // --- NEW: Add modal state ---
   const [addOpen, setAddOpen] = useState(false);
@@ -194,6 +195,64 @@ export default function AilmentsPage() {
       alert(e?.message ?? "Failed to add ailment");
     } finally {
       setAdding(false);
+    }
+  };
+
+  const startTherapySession = async (ailment: MedicalCondition) => {
+    if (!profile) {
+      alert("Please complete your profile first");
+      return;
+    }
+
+    setGeneratingExercise(true);
+    try {
+      // Prepare user profile data for the exercise recommendation API
+      const userProfileData = {
+        height: profile.height_cm,
+        weight: profile.weight_kg,
+        age: profile.age,
+        gender: profile.gender as 'male' | 'female' | 'other',
+        painLocation: ailment.location_on_body,
+        painLevel: ailment.pain_level,
+        fitnessLevel: profile.fitness_level as 'beginner' | 'intermediate' | 'advanced',
+        medicalHistory: ailment.description,
+        currentLimitations: ailment.description
+      };
+
+      console.log('Generating exercise for:', userProfileData);
+
+      // Call the exercise recommendation API
+      const response = await fetch('/api/exercise-recommendation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userProfileData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate exercise');
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate exercise');
+      }
+
+      // Store the exercise data and navigate to physio coach
+      sessionStorage.setItem('generatedExercise', JSON.stringify(data.data));
+      
+      // Close the modal and navigate
+      setActiveId(null);
+      router.push('/physio-coach');
+
+    } catch (error) {
+      console.error('Error generating exercise:', error);
+      alert(`Failed to generate exercise: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setGeneratingExercise(false);
     }
   };
 
@@ -473,12 +532,21 @@ export default function AilmentsPage() {
             <div className="mt-6 flex items-center justify-between">
               {!editMode ? (
                 <>
-                  <button
-                    onClick={() => setEditMode(true)}
-                    className="px-4 py-2 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold hover:from-blue-600 hover:to-indigo-600 transition"
-                  >
-                    Edit
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setEditMode(true)}
+                      className="px-4 py-2 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold hover:from-blue-600 hover:to-indigo-600 transition"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => startTherapySession(active)}
+                      disabled={!profile || fetchingProfile || generatingExercise}
+                      className="px-4 py-2 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold hover:from-green-600 hover:to-emerald-700 transition disabled:opacity-60"
+                    >
+                      {generatingExercise ? "Generating Exercise..." : !profile ? "Profile Required" : "Start Therapy"}
+                    </button>
+                  </div>
                   <button
                     onClick={onDelete}
                     disabled={deleting}

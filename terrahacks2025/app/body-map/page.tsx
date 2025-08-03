@@ -15,6 +15,12 @@ interface BodyZone {
   commonInjuries: string[];
   painPatterns: string[];
   color: string;
+  hasSides?: boolean; // Whether this body part has left/right sides
+}
+
+interface SelectedZoneWithSide extends BodyZone {
+  selectedSide?: 'left' | 'right' | 'both';
+  uniqueId: string; // Unique identifier including side
 }
 
 const bodyZones: BodyZone[] = [
@@ -24,7 +30,8 @@ const bodyZones: BodyZone[] = [
     description: 'Contains the brain and sensory organs.',
     commonInjuries: ['Concussion', 'Tension headache', 'Migraine', 'Sinusitis'],
     painPatterns: ['Throbbing pain', 'Pressure sensation', 'Sensitivity to light', 'Nausea'],
-    color: '#3B82F6'
+    color: '#3B82F6',
+    hasSides: false
   },
   {
     id: 'neck',
@@ -32,7 +39,8 @@ const bodyZones: BodyZone[] = [
     description: 'The cervical spine supports the head and allows for neck movement.',
     commonInjuries: ['Whiplash', 'Cervical strain', 'Herniated disc', 'Cervical radiculopathy'],
     painPatterns: ['Stiffness', 'Sharp pain with movement', 'Radiating pain to shoulders/arms', 'Headaches'],
-    color: '#8B5CF6'
+    color: '#8B5CF6',
+    hasSides: false
   },
   {
     id: 'shoulders',
@@ -40,7 +48,8 @@ const bodyZones: BodyZone[] = [
     description: 'Complex joint allowing wide range of arm movement.',
     commonInjuries: ['Rotator cuff tear', 'Frozen shoulder', 'Shoulder impingement', 'Bursitis'],
     painPatterns: ['Pain with overhead movement', 'Weakness in arm', 'Night pain', 'Clicking/popping'],
-    color: '#06B6D4'
+    color: '#06B6D4',
+    hasSides: true
   },
   {
     id: 'upper-back',
@@ -48,7 +57,8 @@ const bodyZones: BodyZone[] = [
     description: 'Mid-back region providing stability and rib cage support.',
     commonInjuries: ['Thoracic strain', 'Costovertebral joint dysfunction', 'Postural kyphosis'],
     painPatterns: ['Aching between shoulder blades', 'Pain with breathing', 'Stiffness', 'Postural pain'],
-    color: '#10B981'
+    color: '#10B981',
+    hasSides: false
   },
   {
     id: 'lower-back',
@@ -56,7 +66,8 @@ const bodyZones: BodyZone[] = [
     description: 'Lower spine supporting body weight and trunk movement.',
     commonInjuries: ['Lumbar strain', 'Herniated disc', 'Sciatica', 'Spondylolisthesis'],
     painPatterns: ['Low back pain', 'Radiating leg pain', 'Stiffness', 'Pain with bending/lifting'],
-    color: '#F59E0B'
+    color: '#F59E0B',
+    hasSides: false
   },
   {
     id: 'chest',
@@ -64,7 +75,8 @@ const bodyZones: BodyZone[] = [
     description: 'Contains heart, lungs, and rib cage.',
     commonInjuries: ['Rib fracture', 'Costochondritis', 'Muscle strain', 'Intercostal neuralgia'],
     painPatterns: ['Sharp chest pain', 'Pain with breathing', 'Tenderness to touch', 'Radiating pain'],
-    color: '#EF4444'
+    color: '#EF4444',
+    hasSides: false
   },
   {
     id: 'elbows',
@@ -72,7 +84,8 @@ const bodyZones: BodyZone[] = [
     description: 'Hinge joint connecting upper and lower arm.',
     commonInjuries: ['Tennis elbow', 'Golfer\'s elbow', 'Bursitis', 'Ulnar nerve entrapment'],
     painPatterns: ['Pain with gripping', 'Tenderness on bony prominences', 'Weakness', 'Stiffness'],
-    color: '#EC4899'
+    color: '#EC4899',
+    hasSides: true
   },
   {
     id: 'wrists-hands',
@@ -80,7 +93,8 @@ const bodyZones: BodyZone[] = [
     description: 'Complex joints enabling fine motor skills and grip.',
     commonInjuries: ['Carpal tunnel syndrome', 'De Quervain\'s tenosynovitis', 'Trigger finger', 'Wrist sprain'],
     painPatterns: ['Numbness/tingling', 'Pain with repetitive movements', 'Weakness', 'Stiffness'],
-    color: '#84CC16'
+    color: '#84CC16',
+    hasSides: true
   },
   {
     id: 'hips',
@@ -88,7 +102,8 @@ const bodyZones: BodyZone[] = [
     description: 'Ball-and-socket joints supporting body weight and leg movement.',
     commonInjuries: ['Hip bursitis', 'Labral tear', 'Hip impingement', 'Osteoarthritis'],
     painPatterns: ['Groin pain', 'Lateral hip pain', 'Stiffness', 'Pain with walking'],
-    color: '#6366F1'
+    color: '#6366F1',
+    hasSides: true
   },
   {
     id: 'knees',
@@ -96,7 +111,8 @@ const bodyZones: BodyZone[] = [
     description: 'Complex hinge joints supporting body weight and movement.',
     commonInjuries: ['ACL/MCL tear', 'Meniscus tear', 'Patellofemoral pain', 'Osteoarthritis'],
     painPatterns: ['Pain with stairs', 'Swelling', 'Instability', 'Clicking/popping'],
-    color: '#F97316'
+    color: '#F97316',
+    hasSides: true
   },
   {
     id: 'ankles-feet',
@@ -104,19 +120,21 @@ const bodyZones: BodyZone[] = [
     description: 'Complex structures supporting body weight and locomotion.',
     commonInjuries: ['Ankle sprain', 'Plantar fasciitis', 'Achilles tendinitis', 'Bunions'],
     painPatterns: ['Pain with walking', 'Morning stiffness', 'Swelling', 'Instability'],
-    color: '#8B5A2B'
+    color: '#8B5A2B',
+    hasSides: true
   }
 ];
 
 export default function BodyMapPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [selectedZones, setSelectedZones] = useState<BodyZone[]>([]);
+  const [selectedZones, setSelectedZones] = useState<SelectedZoneWithSide[]>([]);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [painLevels, setPainLevels] = useState<{[key: string]: number}>({});
   const [submitting, setSubmitting] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isGeneratingExercise, setIsGeneratingExercise] = useState(false);
+  const [showSideSelector, setShowSideSelector] = useState<{zoneId: string; zone: BodyZone} | null>(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -142,21 +160,65 @@ export default function BodyMapPage() {
   }, [user]);
 
   const toggleZone = (zone: BodyZone) => {
-    if (selectedZones.find(z => z.id === zone.id)) {
-      // Remove zone
-      setSelectedZones(selectedZones.filter(z => z.id !== zone.id));
-      const newPainLevels = { ...painLevels };
-      delete newPainLevels[zone.id];
-      setPainLevels(newPainLevels);
+    if (zone.hasSides) {
+      // For bilateral body parts, show side selector
+      setShowSideSelector({ zoneId: zone.id, zone });
     } else {
-      // Add zone
-      setSelectedZones([...selectedZones, zone]);
-      setPainLevels({ ...painLevels, [zone.id]: 5 });
+      // For single body parts, toggle directly
+      const uniqueId = zone.id;
+      const existingZone = selectedZones.find(z => z.uniqueId === uniqueId);
+      
+      if (existingZone) {
+        // Remove zone
+        setSelectedZones(selectedZones.filter(z => z.uniqueId !== uniqueId));
+        const newPainLevels = { ...painLevels };
+        delete newPainLevels[uniqueId];
+        setPainLevels(newPainLevels);
+      } else {
+        // Add zone
+        const newZone: SelectedZoneWithSide = {
+          ...zone,
+          uniqueId,
+          selectedSide: undefined
+        };
+        setSelectedZones([...selectedZones, newZone]);
+        setPainLevels({ ...painLevels, [uniqueId]: 5 });
+      }
     }
   };
 
-  const updatePainLevel = (zoneId: string, level: number) => {
-    setPainLevels({ ...painLevels, [zoneId]: level });
+  const selectSide = (side: 'left' | 'right' | 'both') => {
+    if (!showSideSelector) return;
+    
+    const { zone } = showSideSelector;
+    const uniqueId = `${zone.id}-${side}`;
+    
+    // Check if this specific side is already selected
+    const existingZone = selectedZones.find(z => z.uniqueId === uniqueId);
+    
+    if (existingZone) {
+      // Remove this specific side
+      setSelectedZones(selectedZones.filter(z => z.uniqueId !== uniqueId));
+      const newPainLevels = { ...painLevels };
+      delete newPainLevels[uniqueId];
+      setPainLevels(newPainLevels);
+    } else {
+      // Add this specific side
+      const newZone: SelectedZoneWithSide = {
+        ...zone,
+        uniqueId,
+        selectedSide: side,
+        name: side === 'both' ? zone.name : `${side.charAt(0).toUpperCase() + side.slice(1)} ${zone.name.toLowerCase()}`
+      };
+      setSelectedZones([...selectedZones, newZone]);
+      setPainLevels({ ...painLevels, [uniqueId]: 5 });
+    }
+    
+    setShowSideSelector(null);
+  };
+
+  const updatePainLevel = (uniqueId: string, level: number) => {
+    setPainLevels({ ...painLevels, [uniqueId]: level });
   };
 
     const handleDone = async () => {
@@ -175,8 +237,8 @@ export default function BodyMapPage() {
       await Promise.all(
         selectedZones.map((zone) => {
           const description = zone.painPatterns.join(', '); // convert array to string
-          const location_on_body = zone.name;
-          const pain_level = painLevels[zone.id] ?? 5;
+          const location_on_body = zone.name; // This now includes side info (e.g., "Left Shoulder")
+          const pain_level = painLevels[zone.uniqueId] ?? 5;
           const is_physio = false; // set true/false based on your app context
 
           return ProfileService.addMedicalCondition(
@@ -200,7 +262,7 @@ export default function BodyMapPage() {
   };
 
   // Handle body part selection and exercise generation
-  const handleGenerateExercise = async (zone: BodyZone) => {
+  const handleGenerateExercise = async (zone: SelectedZoneWithSide) => {
     if (!profile || !user) {
       alert('User profile not found. Please complete your profile setup.');
       return;
@@ -210,7 +272,7 @@ export default function BodyMapPage() {
 
     try {
       // Get pain level for this zone, default to 5 if not set
-      const painLevel = painLevels[zone.id] || 5;
+      const painLevel = painLevels[zone.uniqueId] || 5;
 
       // Prepare the request data for the exercise recommendation API
       const requestData = {
@@ -218,7 +280,8 @@ export default function BodyMapPage() {
         weight: profile.weight_kg,
         age: profile.age,
         gender: profile.gender || 'other',
-        painLocation: zone.name,
+        painLocation: zone.name, // This now includes side info (e.g., "Left Shoulder")
+        painSide: zone.selectedSide, // Pass the specific side information
         painLevel: painLevel,
         fitnessLevel: profile.fitness_level || 'beginner',
         medicalHistory: `Pain in ${zone.name}. Common patterns: ${zone.painPatterns.join(', ')}`,
@@ -657,7 +720,7 @@ export default function BodyMapPage() {
 
                   {/* Selected Zones Information */}
                   {selectedZones.map((zone) => (
-                    <div key={zone.id} className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-6 border border-white/20 relative overflow-hidden animate-fade-in-up">
+                    <div key={zone.uniqueId} className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-6 border border-white/20 relative overflow-hidden animate-fade-in-up">
                       <div className="absolute inset-0 bg-gradient-to-br from-white/95 to-blue-50/50 rounded-3xl"></div>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-12 translate-x-12"></div>
                       
@@ -667,7 +730,13 @@ export default function BodyMapPage() {
                             {zone.name}
                           </h4>
                           <button
-                            onClick={() => toggleZone(zone)}
+                            onClick={() => {
+                              // Remove this specific zone
+                              setSelectedZones(selectedZones.filter(z => z.uniqueId !== zone.uniqueId));
+                              const newPainLevels = { ...painLevels };
+                              delete newPainLevels[zone.uniqueId];
+                              setPainLevels(newPainLevels);
+                            }}
                             className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -686,12 +755,12 @@ export default function BodyMapPage() {
                               type="range"
                               min="1"
                               max="10"
-                              value={painLevels[zone.id] || 5}
-                              onChange={(e) => updatePainLevel(zone.id, parseInt(e.target.value))}
+                              value={painLevels[zone.uniqueId] || 5}
+                              onChange={(e) => updatePainLevel(zone.uniqueId, parseInt(e.target.value))}
                               className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                             />
                             <span className="text-lg font-bold" style={{color: zone.color}}>
-                              {painLevels[zone.id] || 5}
+                              {painLevels[zone.uniqueId] || 5}
                             </span>
                           </div>
                           <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -776,6 +845,72 @@ export default function BodyMapPage() {
           </div>
         </main>
       </div>
+
+      {/* Side Selector Modal */}
+      {showSideSelector && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full animate-fade-in-up">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-black mb-2">
+                Select Side
+              </h3>
+              <p className="text-gray-600">
+                Which side of your {showSideSelector.zone.name.toLowerCase()} has pain?
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <button
+                onClick={() => selectSide('left')}
+                className="w-full p-4 text-left bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-2xl border-2 border-blue-200 hover:border-blue-300 transition-all duration-300 transform hover:scale-[1.02]"
+              >
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded-full bg-blue-500 mr-3"></div>
+                  <div>
+                    <div className="font-semibold text-black">Left {showSideSelector.zone.name}</div>
+                    <div className="text-sm text-gray-600">Pain on the left side</div>
+                  </div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => selectSide('right')}
+                className="w-full p-4 text-left bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-2xl border-2 border-green-200 hover:border-green-300 transition-all duration-300 transform hover:scale-[1.02]"
+              >
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded-full bg-green-500 mr-3"></div>
+                  <div>
+                    <div className="font-semibold text-black">Right {showSideSelector.zone.name}</div>
+                    <div className="text-sm text-gray-600">Pain on the right side</div>
+                  </div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => selectSide('both')}
+                className="w-full p-4 text-left bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 rounded-2xl border-2 border-purple-200 hover:border-purple-300 transition-all duration-300 transform hover:scale-[1.02]"
+              >
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded-full bg-purple-500 mr-3"></div>
+                  <div>
+                    <div className="font-semibold text-black">Both {showSideSelector.zone.name}</div>
+                    <div className="text-sm text-gray-600">Pain on both sides</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+            
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setShowSideSelector(null)}
+                className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Custom Animations */}
       <style jsx global>{`
