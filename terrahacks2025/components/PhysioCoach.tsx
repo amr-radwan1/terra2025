@@ -40,6 +40,12 @@ interface ExerciseData {
     loweringMax: number;
     restMax: number;
   };
+  prescription?: {
+    sets: number;
+    repsPerSet: number;
+    restBetweenSets: number; // in seconds
+    reasoning: string;
+  };
 }
 
 interface PhysioCoachProps {
@@ -180,12 +186,78 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
   const [exerciseStarted, setExerciseStarted] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
 
+  // New state for sets and reps tracking
+  const [currentSet, setCurrentSet] = useState(1);
+  const [targetSets, setTargetSets] = useState(3);
+  const [targetRepsPerSet, setTargetRepsPerSet] = useState(10);
+  const [isRestingBetweenSets, setIsRestingBetweenSets] = useState(false);
+  const [restTimer, setRestTimer] = useState(0);
+  const [exerciseComplete, setExerciseComplete] = useState(false);
+  const [isGeneratingPrescription, setIsGeneratingPrescription] = useState(false);
+
   // Set MediaPipe as loaded when both scripts are loaded
   useEffect(() => {
     if (scriptsLoaded.camera && scriptsLoaded.pose && window.Camera && window.Pose) {
       setIsMediaPipeLoaded(true);
     }
   }, [scriptsLoaded]);
+
+  // Function to generate exercise prescription using Gemini
+  const generateExercisePrescription = async (exercise: ExerciseData) => {
+    setIsGeneratingPrescription(true);
+    try {
+      const response = await fetch('/api/exercise-prescription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          exerciseName: exercise.exerciseName,
+          description: exercise.description,
+          userProfile: {
+            // These would typically come from user profile, using defaults for now
+            age: 30,
+            fitnessLevel: 'beginner',
+            painLevel: 5,
+            medicalHistory: '',
+            currentLimitations: ''
+          }
+        }),
+      });
+
+      if (response.ok) {
+        const prescription = await response.json();
+        setTargetSets(prescription.sets);
+        setTargetRepsPerSet(prescription.repsPerSet);
+        
+        // Update the current exercise with prescription
+        const updatedExercise = {
+          ...exercise,
+          prescription: {
+            sets: prescription.sets,
+            repsPerSet: prescription.repsPerSet,
+            restBetweenSets: prescription.restBetweenSets,
+            reasoning: prescription.reasoning
+          }
+        };
+        setCurrentExercise(updatedExercise);
+        
+        return prescription;
+      } else {
+        console.error('Failed to generate prescription');
+        // Use default values
+        setTargetSets(3);
+        setTargetRepsPerSet(10);
+      }
+    } catch (error) {
+      console.error('Error generating prescription:', error);
+      // Use default values
+      setTargetSets(3);
+      setTargetRepsPerSet(10);
+    } finally {
+      setIsGeneratingPrescription(false);
+    }
+  };
 
   // Initialize with preloaded exercise if provided
   useEffect(() => {
@@ -198,9 +270,44 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       hasReachedPeakRef.current = false;
       lastStateRef.current = 'ready';
       setExerciseStarted(false);
-      setFeedback(`Exercise loaded: ${preloadedExercise.exerciseName}. Click "Start Exercise" to begin.`);
+      setCurrentSet(1);
+      setIsRestingBetweenSets(false);
+      setRestTimer(0);
+      setExerciseComplete(false);
+      
+      // Generate prescription for the exercise
+      if (!preloadedExercise.prescription) {
+        generateExercisePrescription(preloadedExercise);
+        setFeedback(`Exercise loaded: ${preloadedExercise.exerciseName}. Generating personalized prescription...`);
+      } else {
+        setTargetSets(preloadedExercise.prescription.sets);
+        setTargetRepsPerSet(preloadedExercise.prescription.repsPerSet);
+        setFeedback(`Exercise loaded: ${preloadedExercise.exerciseName}. Click "Start Exercise" to begin.`);
+      }
     }
   }, [preloadedExercise]);
+
+  // Rest timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRestingBetweenSets && restTimer > 0) {
+      interval = setInterval(() => {
+        setRestTimer(prev => {
+          if (prev <= 1) {
+            // Rest period finished
+            setIsRestingBetweenSets(false);
+            setFeedback(`Rest complete! Starting Set ${currentSet}/${targetSets}`);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRestingBetweenSets, restTimer, currentSet, targetSets]);
 
   // Default exercise data (fallback)
   const defaultExercise: ExerciseData = {
@@ -249,15 +356,21 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
   const handleStartExercise = () => {
     setExerciseStarted(!exerciseStarted);
     if (!exerciseStarted) {
-      // Starting exercise - reset counters
+      // Starting exercise - reset all counters
       setRepCount(0);
       repCounterRef.current = 0;
       hasReachedPeakRef.current = false;
       lastRepTimeRef.current = 0;
       lastStateRef.current = 'ready';
-      setFeedback('Exercise started! Begin your movements');
+      setCurrentSet(1);
+      setIsRestingBetweenSets(false);
+      setRestTimer(0);
+      setExerciseComplete(false);
+      setFeedback(`Exercise started! Set ${currentSet}/${targetSets} - ${targetRepsPerSet} reps`);
     } else {
       // Stopping exercise
+      setIsRestingBetweenSets(false);
+      setRestTimer(0);
       setFeedback('Exercise stopped');
     }
   };
@@ -627,7 +740,7 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
 
     const analyzeExerciseForm = (angle: number, landmarks: any[], exercise: ExerciseData, detectedArm: 'left' | 'right' = 'left') => {
       if (!exerciseStarted) {
-        setFeedback('Click "Start Exercise" to begin tracking your movements');
+        setFeedback(`Ready to start! Target: ${targetSets} sets × ${targetRepsPerSet} reps. Click "Start Exercise" to begin.`);
         setIsCorrectForm(null);
         return;
       }
@@ -692,12 +805,33 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       }
       
       // Count rep when reaching optimal peak for the first time in this movement cycle
-      if (isInOptimalPeak && !hasReachedPeakRef.current && currentTime - lastRepTimeRef.current > 1000) {
+      if (isInOptimalPeak && !hasReachedPeakRef.current && currentTime - lastRepTimeRef.current > 1000 && !isRestingBetweenSets && !exerciseComplete) {
         hasReachedPeakRef.current = true;
         lastRepTimeRef.current = currentTime;
         repCounterRef.current += 1;
         setRepCount(repCounterRef.current);
-        console.log(`Rep counted! Total: ${repCounterRef.current}`);
+        console.log(`Rep counted! Current set: ${currentSet}, Rep: ${repCounterRef.current}/${targetRepsPerSet}`);
+        
+        // Check if set is completed
+        if (repCounterRef.current >= targetRepsPerSet) {
+          console.log(`Set ${currentSet} completed!`);
+          
+          if (currentSet >= targetSets) {
+            // All sets completed
+            setExerciseComplete(true);
+            setExerciseStarted(false);
+            setFeedback('🎉 Congratulations! Exercise completed successfully!');
+          } else {
+            // Start rest period between sets
+            const restTime = currentExercise?.prescription?.restBetweenSets || 60;
+            setIsRestingBetweenSets(true);
+            setRestTimer(restTime);
+            setCurrentSet(prev => prev + 1);
+            setRepCount(0);
+            repCounterRef.current = 0;
+            setFeedback(`Set ${currentSet} complete! Rest for ${restTime} seconds before Set ${currentSet + 1}`);
+          }
+        }
       }
       
       // Reset peak flag when returning to starting position
@@ -717,35 +851,43 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       }
 
       // Provide feedback based on current angle
-      if (isInOptimalPeak) {
-        feedbackText = `✅ Excellent! Rep ${repCounterRef.current} completed - Full range achieved`;
+      if (exerciseComplete) {
+        feedbackText = '🎉 Congratulations! Exercise completed successfully!';
+        formCorrect = true;
+        currentState = 'complete';
+      } else if (isRestingBetweenSets) {
+        feedbackText = `😴 Rest time: ${restTimer}s remaining before Set ${currentSet}/${targetSets}`;
+        formCorrect = null;
+        currentState = 'resting';
+      } else if (isInOptimalPeak) {
+        feedbackText = `✅ Excellent! Set ${currentSet}/${targetSets} - Rep ${repCounterRef.current}/${targetRepsPerSet} completed`;
         formCorrect = true;
         currentState = actionVerbGerund;
       } else if (isLegExercise) {
         // Leg exercise specific feedback
         if (exercise.exerciseName.toLowerCase().includes('squat') && angle < optimalPeak[0]) {
-          feedbackText = `📈 Go deeper! Squat down more to reach full range`;
+          feedbackText = `📈 Go deeper! Set ${currentSet}/${targetSets} - Rep ${repCounterRef.current + 1}/${targetRepsPerSet}`;
           formCorrect = true;
           currentState = actionVerbGerund;
         } else if (angle > liftingMin) {
-          feedbackText = `📈 Keep going! ${actionVerbGerund === 'squatting' ? 'Go deeper' : 'Continue movement'}`;
+          feedbackText = `📈 Keep going! ${actionVerbGerund === 'squatting' ? 'Go deeper' : 'Continue movement'} - Set ${currentSet}/${targetSets}`;
           formCorrect = true;
           currentState = actionVerbGerund;
         } else {
-          feedbackText = `🏁 Ready position. Begin ${exercise.exerciseName.toLowerCase()}`;
+          feedbackText = `🏁 Ready for Set ${currentSet}/${targetSets} - ${targetRepsPerSet - repCounterRef.current} reps remaining`;
           formCorrect = true;
           currentState = 'ready';
         }
       } else if ((isLiftingExercise && angle > liftingMin) || (isCurlingExercise && angle < liftingMin)) {
-        feedbackText = `📈 Keep going! ${isLiftingExercise ? 'Raise' : 'Curl'} your ${bodyPart} ${isLiftingExercise ? 'higher' : 'more'}`;
+        feedbackText = `📈 Keep going! ${isLiftingExercise ? 'Raise' : 'Curl'} your ${bodyPart} ${isLiftingExercise ? 'higher' : 'more'} - Set ${currentSet}/${targetSets}`;
         formCorrect = true;
         currentState = actionVerbGerund;
       } else if (isInStartingPosition) {
-        feedbackText = `🏁 Ready position. Begin ${exercise.exerciseName.toLowerCase()}`;
+        feedbackText = `🏁 Ready for Set ${currentSet}/${targetSets} - ${targetRepsPerSet - repCounterRef.current} reps remaining`;
         formCorrect = true;
         currentState = 'ready';
       } else {
-        feedbackText = '📈 Start your movement';
+        feedbackText = `📈 Start your movement - Set ${currentSet}/${targetSets}`;
         formCorrect = true;
         currentState = 'ready';
       }
@@ -871,13 +1013,21 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
             <div className="flex justify-center gap-4 mt-4">
               <button
                 onClick={handleStartExercise}
+                disabled={isGeneratingPrescription}
                 className={`px-6 py-2 rounded-lg transition-colors ${
-                  exerciseStarted 
-                    ? 'bg-red-600 text-white hover:bg-red-700' 
-                    : 'bg-green-600 text-white hover:bg-green-700'
+                  isGeneratingPrescription
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : exerciseStarted 
+                      ? 'bg-red-600 text-white hover:bg-red-700' 
+                      : 'bg-green-600 text-white hover:bg-green-700'
                 }`}
               >
-                {exerciseStarted ? 'Stop Exercise' : 'Start Exercise'}
+                {isGeneratingPrescription ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Generating Prescription...
+                  </div>
+                ) : exerciseStarted ? 'Stop Exercise' : 'Start Exercise'}
               </button>
               <button
                 onClick={() => setShowDemo(!showDemo)}
@@ -915,11 +1065,27 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
                   })()}
                 </div>
                 
-                {/* Rep counter overlay */}
+                {/* Sets and Reps counter overlay */}
                 <div className="absolute top-4 right-4 bg-blue-600 bg-opacity-90 text-white px-4 py-2 rounded">
                   <div className="text-center">
-                    <div className="text-2xl font-bold">{repCount}</div>
-                    <div className="text-xs">REPS</div>
+                    {exerciseComplete ? (
+                      <>
+                        <div className="text-lg font-bold">✅ COMPLETE</div>
+                        <div className="text-xs">{targetSets} SETS DONE</div>
+                      </>
+                    ) : isRestingBetweenSets ? (
+                      <>
+                        <div className="text-xl font-bold">{restTimer}s</div>
+                        <div className="text-xs">REST TIME</div>
+                        <div className="text-xs mt-1">Set {currentSet-1} → {currentSet}</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-2xl font-bold">{repCount}/{targetRepsPerSet}</div>
+                        <div className="text-xs">REPS</div>
+                        <div className="text-xs mt-1">Set {currentSet}/{targetSets}</div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -984,31 +1150,77 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
                 Exercise Progress
               </h3>
               <div className="space-y-3">
-                {/* <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Repetitions:</span>
-                  <span className="text-2xl font-bold text-blue-600">{repCount}</span>
-                </div> */}
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Current Set:</span>
+                  <span className="text-xl font-bold text-blue-600">
+                    {exerciseComplete ? 'Complete!' : `${currentSet} / ${targetSets}`}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Current Reps:</span>
+                  <span className="text-xl font-bold text-green-600">
+                    {exerciseComplete ? 'All done!' : `${repCount} / ${targetRepsPerSet}`}
+                  </span>
+                </div>
+                {isRestingBetweenSets && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Rest Time:</span>
+                    <span className="text-lg font-bold text-purple-600">{restTimer}s</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Current Phase:</span>
                   <span className={`px-2 py-1 rounded text-sm font-medium ${
+                    exerciseState === 'complete' ? 'bg-green-100 text-green-800' :
+                    exerciseState === 'resting' ? 'bg-purple-100 text-purple-800' :
                     exerciseState === 'lifting' || exerciseState === 'curling' ? 'bg-green-100 text-green-800' :
                     exerciseState === 'lowering' ? 'bg-yellow-100 text-yellow-800' :
-                    exerciseState === 'rest' ? 'bg-purple-100 text-purple-800' :
                     'bg-blue-100 text-blue-800'
                   }`}>
-                    {exerciseState.charAt(0).toUpperCase() + exerciseState.slice(1)}
+                    {exerciseState === 'resting' ? 'Resting' : 
+                     exerciseState === 'complete' ? 'Complete' :
+                     exerciseState.charAt(0).toUpperCase() + exerciseState.slice(1)}
                   </span>
                 </div>
-                {/* <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Active Limb:</span>
-                  <span className="text-sm font-medium text-gray-800 capitalize">
-                    {(() => {
-                      const exercise = currentExercise || defaultExercise;
-                      const bodyPart = getExerciseBodyPart(exercise);
-                      return `${detectedArm} ${bodyPart === 'legs' ? 'leg' : 'arm'}`;
-                    })()}
-                  </span>
-                </div> */}
+                {/* Progress bar for current set */}
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>Set Progress</span>
+                    <span>{Math.round((repCount / targetRepsPerSet) * 100)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min((repCount / targetRepsPerSet) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                {/* Overall progress bar */}
+                <div className="mt-3">
+                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>Overall Progress</span>
+                    <span>{Math.round(((currentSet - 1) * targetRepsPerSet + repCount) / (targetSets * targetRepsPerSet) * 100)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(((currentSet - 1) * targetRepsPerSet + repCount) / (targetSets * targetRepsPerSet) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                {currentExercise?.prescription && (
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="text-sm text-gray-700">
+                      <div className="font-medium mb-1">Exercise Prescription:</div>
+                      <div>• Sets: {currentExercise.prescription.sets}</div>
+                      <div>• Reps per set: {currentExercise.prescription.repsPerSet}</div>
+                      <div>• Rest between sets: {currentExercise.prescription.restBetweenSets}s</div>
+                      <div className="mt-2 text-xs text-gray-600 italic">
+                        {currentExercise.prescription.reasoning}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
