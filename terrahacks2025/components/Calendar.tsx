@@ -32,8 +32,39 @@ interface GoogleCalendarEvent {
   };
 }
 
-export default function Calendar() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+interface PhysioSession {
+  id: number;
+  condition_id: number;
+  date_of_session: string;
+  is_complete: boolean;
+  session_description: string;
+}
+
+interface MedicalCondition {
+  id: number;
+  email: string;
+  is_physio: boolean;
+  location_on_body: string;
+  description: string;
+  pain_level: number;
+}
+
+interface CalendarProps {
+  userSessions?: PhysioSession[];
+  medicalConditions?: MedicalCondition[];
+}
+
+export default function Calendar({ userSessions = [], medicalConditions = [] }: CalendarProps) {
+  // Set current date to the earliest session date, or today if no sessions
+  const getInitialDate = () => {
+    if (userSessions.length === 0) return new Date();
+    
+    const sessionDates = userSessions.map(session => new Date(session.date_of_session));
+    const earliestDate = new Date(Math.min(...sessionDates.map(d => d.getTime())));
+    return earliestDate;
+  };
+  
+  const [currentDate, setCurrentDate] = useState(getInitialDate());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [selectedDayData, setSelectedDayData] = useState<DayData | null>(null);
@@ -41,144 +72,40 @@ export default function Calendar() {
   const [isLoadingGoogleEvents, setIsLoadingGoogleEvents] = useState(false);
   const [completedDays, setCompletedDays] = useState<Set<string>>(new Set());
 
-  // Sample physiotherapy exercises database
-  const exerciseDatabase: Exercise[] = [
-    {
-      id: '1',
-      name: 'Knee Extension Stretch',
-      description: 'Gentle knee extension to improve range of motion',
-      duration: '10 minutes',
-      difficulty: 'beginner',
-      category: 'Knee Rehabilitation',
+  // Convert user sessions to exercises - NO HARDCODING
+  const convertSessionsToExercises = (sessions: PhysioSession[]): Exercise[] => {
+    return sessions.map(session => ({
+      id: session.id.toString(),
+      name: session.session_description || `Session ${session.id}`,
+      description: session.session_description || 'Physiotherapy session',
+      duration: '30 minutes',
+      difficulty: 'beginner' as const,
+      category: 'Physiotherapy',
       instructions: [
-        'Sit on a chair with your back straight',
-        'Slowly extend your knee as far as comfortable',
-        'Hold for 5 seconds',
-        'Return to starting position',
-        'Repeat 10 times'
+        'Follow your physiotherapist\'s guidance',
+        'Complete all prescribed exercises',
+        'Maintain proper form throughout',
+        'Take breaks as needed'
       ]
-    },
-    {
-      id: '2',
-      name: 'Ankle Pumps',
-      description: 'Improve circulation and ankle flexibility',
-      duration: '5 minutes',
-      difficulty: 'beginner',
-      category: 'Ankle Rehabilitation',
-      instructions: [
-        'Sit or lie down comfortably',
-        'Point your toes away from you',
-        'Then pull your toes toward your shin',
-        'Repeat rhythmically for 5 minutes'
-      ]
-    },
-    {
-      id: '3',
-      name: 'Shoulder Blade Squeezes',
-      description: 'Strengthen upper back and improve posture',
-      duration: '8 minutes',
-      difficulty: 'beginner',
-      category: 'Shoulder Rehabilitation',
-      instructions: [
-        'Sit or stand with your arms at your sides',
-        'Squeeze your shoulder blades together',
-        'Hold for 3 seconds',
-        'Release slowly',
-        'Repeat 15 times'
-      ]
-    },
-    {
-      id: '4',
-      name: 'Hip Flexor Stretch',
-      description: 'Improve hip flexibility and reduce lower back pain',
-      duration: '12 minutes',
-      difficulty: 'intermediate',
-      category: 'Hip Rehabilitation',
-      instructions: [
-        'Kneel on one knee with the other foot forward',
-        'Keep your back straight',
-        'Gently push your hips forward',
-        'Hold for 30 seconds',
-        'Switch sides and repeat'
-      ]
-    },
-    {
-      id: '5',
-      name: 'Core Stabilization',
-      description: 'Strengthen core muscles for better stability',
-      duration: '15 minutes',
-      difficulty: 'intermediate',
-      category: 'Core Rehabilitation',
-      instructions: [
-        'Lie on your back with knees bent',
-        'Engage your abdominal muscles',
-        'Lift your head and shoulders slightly',
-        'Hold for 10 seconds',
-        'Repeat 8 times'
-      ]
-    },
-    {
-      id: '6',
-      name: 'Balance Training',
-      description: 'Improve balance and coordination',
-      duration: '10 minutes',
-      difficulty: 'intermediate',
-      category: 'Balance Rehabilitation',
-      instructions: [
-        'Stand on one leg',
-        'Keep your core engaged',
-        'Hold for 30 seconds',
-        'Switch legs',
-        'Repeat 3 times each side'
-      ]
-    },
-    {
-      id: '7',
-      name: 'Deep Breathing Exercise',
-      description: 'Improve lung capacity and reduce stress',
-      duration: '5 minutes',
-      difficulty: 'beginner',
-      category: 'Respiratory Rehabilitation',
-      instructions: [
-        'Sit comfortably with your back straight',
-        'Place one hand on your chest, one on your belly',
-        'Breathe in deeply through your nose',
-        'Feel your belly expand',
-        'Exhale slowly through your mouth'
-      ]
-    },
-    {
-      id: '8',
-      name: 'Wrist Flexor Stretch',
-      description: 'Relieve wrist tension and improve flexibility',
-      duration: '6 minutes',
-      difficulty: 'beginner',
-      category: 'Wrist Rehabilitation',
-      instructions: [
-        'Extend your arm in front of you',
-        'Point your fingers toward the ceiling',
-        'Use your other hand to gently pull fingers back',
-        'Hold for 15 seconds',
-        'Repeat 3 times each hand'
-      ]
-    }
-  ];
+    }));
+  };
 
-  // Generate calendar data with exercises for each day
+
+  // Generate calendar data for the full month with user sessions
   const generateCalendarData = (date: Date): DayData[] => {
+    const days: DayData[] = [];
+    
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const firstDayOfWeek = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    
-    const days: DayData[] = [];
+    const firstDayOfWeek = firstDay.getDay();
     
     // Add empty slots for days before the first day of the month
     for (let i = 0; i < firstDayOfWeek; i++) {
       days.push({
-        date: new Date(0), // Invalid date for empty slots
+        date: new Date(0),
         exercises: [],
         completed: false
       });
@@ -187,45 +114,45 @@ export default function Calendar() {
     // Generate days from 1 to last day of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDay = new Date(year, month, day);
-      
-      // Assign 2-3 exercises per day based on day of week
-      const dayOfWeek = currentDay.getDay();
-      const exercisesForDay: Exercise[] = [];
-      
-      if (dayOfWeek === 0) { // Sunday - Rest day
-        exercisesForDay.push(exerciseDatabase[6]); // Deep breathing
-      } else if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) { // Mon, Wed, Fri - Strength
-        exercisesForDay.push(
-          exerciseDatabase[2], // Shoulder blade squeezes
-          exerciseDatabase[4], // Hip flexor stretch
-          exerciseDatabase[5]  // Core stabilization
-        );
-      } else if (dayOfWeek === 2 || dayOfWeek === 4) { // Tue, Thu - Flexibility
-        exercisesForDay.push(
-          exerciseDatabase[0], // Knee extension
-          exerciseDatabase[1], // Ankle pumps
-          exerciseDatabase[7]  // Wrist flexor stretch
-        );
-      } else { // Saturday - Balance
-        exercisesForDay.push(
-          exerciseDatabase[6], // Deep breathing
-          exerciseDatabase[5]  // Balance training
-        );
-      }
-      
       const dayKey = currentDay.toISOString().split('T')[0];
+      
+      // Find sessions for this specific day
+      const sessionsForDay = userSessions.filter(session => {
+        const sessionDate = new Date(session.date_of_session);
+        return sessionDate.toISOString().split('T')[0] === dayKey;
+      });
+      
+      // Convert sessions to exercises
+      const exercisesForDay: Exercise[] = sessionsForDay.map(session => ({
+        id: session.id.toString(),
+        name: session.session_description || `Session ${session.id}`,
+        description: session.session_description || 'Physiotherapy session',
+        duration: '30 minutes',
+        difficulty: 'beginner' as const,
+        category: 'Physiotherapy',
+        instructions: [
+          'Follow your physiotherapist\'s guidance',
+          'Complete all prescribed exercises',
+          'Maintain proper form throughout',
+          'Take breaks as needed'
+        ]
+      }));
+      
+      // Check if any sessions for this day are completed
+      const isCompleted = sessionsForDay.some(session => session.is_complete) || completedDays.has(dayKey);
+      
       days.push({
         date: new Date(currentDay),
         exercises: exercisesForDay,
-        completed: completedDays.has(dayKey)
+        completed: isCompleted
       });
     }
     
-    // Add empty slots to complete the last week (if needed)
+    // Add empty slots to complete the last week
     const totalSlots = Math.ceil(days.length / 7) * 7;
     while (days.length < totalSlots) {
       days.push({
-        date: new Date(0), // Invalid date for empty slots
+        date: new Date(0),
         exercises: [],
         completed: false
       });
@@ -238,7 +165,7 @@ export default function Calendar() {
 
   useEffect(() => {
     setCalendarData(generateCalendarData(currentDate));
-  }, [currentDate, completedDays]);
+  }, [currentDate, completedDays, userSessions, medicalConditions]);
 
   const getMonthName = (date: Date) => {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -283,10 +210,12 @@ export default function Calendar() {
   };
 
   const handlePreviousMonth = () => {
+    // Move to previous month
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
 
   const handleNextMonth = () => {
+    // Move to next month
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
