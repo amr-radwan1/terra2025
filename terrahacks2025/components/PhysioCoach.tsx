@@ -205,10 +205,62 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
 
   // Set MediaPipe as loaded when both scripts are loaded
   useEffect(() => {
+    console.log('🔍 Script loading check:', {
+      cameraScript: scriptsLoaded.camera,
+      poseScript: scriptsLoaded.pose,
+      windowCamera: !!window.Camera,
+      windowPose: !!window.Pose,
+      timestamp: new Date().toLocaleTimeString()
+    });
+    
     if (scriptsLoaded.camera && scriptsLoaded.pose && window.Camera && window.Pose) {
+      console.log('✅ All MediaPipe scripts loaded successfully');
       setIsMediaPipeLoaded(true);
+    } else {
+      console.log('⏳ Waiting for MediaPipe scripts...', {
+        missing: {
+          cameraScript: !scriptsLoaded.camera,
+          poseScript: !scriptsLoaded.pose,
+          windowCamera: !window.Camera,
+          windowPose: !window.Pose
+        }
+      });
     }
   }, [scriptsLoaded]);
+
+  // Debug DOM elements readiness
+  useEffect(() => {
+    console.log('🔍 DOM elements check:', {
+      videoRef: !!videoRef.current,
+      canvasRef: !!canvasRef.current,
+      timestamp: new Date().toLocaleTimeString()
+    });
+  });
+
+  // Debug: Log the complete initialization state
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      console.log('🔍 5-second initialization check:', {
+        isMediaPipeLoaded,
+        scriptsLoaded,
+        videoRefReady: !!videoRef.current,
+        canvasRefReady: !!canvasRef.current,
+        windowCamera: !!window.Camera,
+        windowPose: !!window.Pose,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      
+      if (isMediaPipeLoaded && videoRef.current && !window.Camera) {
+        console.log('⚠️ ISSUE DETECTED: MediaPipe marked as loaded but Camera class not available');
+      }
+      
+      if (scriptsLoaded.camera && scriptsLoaded.pose && (!window.Camera || !window.Pose)) {
+        console.log('⚠️ ISSUE DETECTED: Scripts marked as loaded but classes not on window');
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Function to generate exercise prescription using Gemini
   const generateExercisePrescription = async (exercise: ExerciseData) => {
@@ -629,23 +681,45 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
   };
 
   useEffect(() => {
-    if (!isMediaPipeLoaded) return;
+    console.log('🎥 MediaPipe initialization useEffect triggered:', {
+      isMediaPipeLoaded,
+      videoRefExists: !!videoRef.current,
+      canvasRefExists: !!canvasRef.current,
+      timestamp: new Date().toLocaleTimeString()
+    });
+    
+    if (!isMediaPipeLoaded) {
+      console.log('❌ MediaPipe not loaded yet, skipping initialization');
+      return;
+    }
 
     let pose: any = null;
     let camera: any = null;
     let isCleanedUp = false;
 
     const initializeMediaPipe = async () => {
+      console.log('🚀 Starting MediaPipe initialization...', {
+        videoRefReady: !!videoRef.current,
+        canvasRefReady: !!canvasRef.current,
+        windowPose: !!window.Pose,
+        windowCamera: !!window.Camera,
+        isCleanedUp,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      
       try {
         // Access MediaPipe from global window object
         const { Pose } = window;
         const { Camera } = window;
 
         if (!Pose || !Camera) {
+          console.error('❌ MediaPipe classes not available on window object');
           setFeedback('MediaPipe not loaded properly. Please refresh the page.');
           return;
         }
 
+        console.log('✅ MediaPipe classes found, creating Pose instance...');
+        
         // Initialize MediaPipe Pose
         pose = new Pose({
           locateFile: (file: string) => {
@@ -653,6 +727,8 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
           }
         });
 
+        console.log('✅ Pose instance created, setting options...');
+        
         pose.setOptions({
           modelComplexity: 1,
           smoothLandmarks: true,
@@ -662,9 +738,16 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
           minTrackingConfidence: 0.5
         });
 
+        console.log('✅ Pose options set, attaching onResults callback...');
         pose.onResults(onResults);
 
         // Initialize camera
+        console.log('🎥 Initializing camera...', {
+          videoRefExists: !!videoRef.current,
+          isCleanedUp,
+          videoElement: videoRef.current
+        });
+        
         if (videoRef.current && !isCleanedUp) {
           camera = new Camera(videoRef.current, {
             onFrame: async () => {
@@ -683,13 +766,22 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
             width: 640,
             height: 480
           });
+          
+          console.log('📷 Camera instance created, starting camera...');
           await camera.start();
+          
+          console.log('🎉 Camera started successfully!');
           if (!isCleanedUp) {
             setFeedback('Position yourself in front of the camera');
           }
+        } else {
+          console.log('❌ Cannot initialize camera:', {
+            videoRefExists: !!videoRef.current,
+            isCleanedUp
+          });
         }
       } catch (error) {
-        console.error('Error initializing MediaPipe:', error);
+        console.error('❌ Error initializing MediaPipe:', error);
         if (!isCleanedUp) {
           setFeedback('Error starting camera. Please check permissions.');
         }
@@ -705,14 +797,30 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       return angle;
     };
 
+    let onResultsCallCount = 0;
+    
     const onResults = (results: any) => {
+      onResultsCallCount++;
+      if (onResultsCallCount === 1) {
+        console.log('🎯 First onResults call received - camera is working!');
+      } else if (onResultsCallCount % 60 === 0) {
+        // Log every 60th frame (roughly every 2 seconds at 30fps)
+        console.log(`📊 onResults called ${onResultsCallCount} times - pose detection active`);
+      }
+      
       if (isCleanedUp) return; // Skip processing if component is being cleaned up
       
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      if (!canvas) {
+        console.log('❌ Canvas ref not available in onResults');
+        return;
+      }
       
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        console.log('❌ Canvas context not available in onResults');
+        return;
+      }
       
       try {
         // Clear canvas
@@ -1281,13 +1389,21 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       <Script
         src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
         onLoad={() => {
+          console.log('📦 Camera utils script loaded at', new Date().toLocaleTimeString());
           setScriptsLoaded(prev => ({ ...prev, camera: true }));
+        }}
+        onError={(error) => {
+          console.error('❌ Failed to load camera utils script:', error);
         }}
       />
       <Script
         src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"
         onLoad={() => {
+          console.log('📦 Pose script loaded at', new Date().toLocaleTimeString());
           setScriptsLoaded(prev => ({ ...prev, pose: true }));
+        }}
+        onError={(error) => {
+          console.error('❌ Failed to load pose script:', error);
         }}
       />
 
