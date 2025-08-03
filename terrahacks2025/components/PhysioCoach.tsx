@@ -303,10 +303,179 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
     }
   };
 
+  // Track if we've already loaded session data to prevent re-triggering (using ref to persist across re-renders)
+  const sessionDataLoadedRef = useRef(false);
+
   // Initialize with preloaded exercise if provided
   useEffect(() => {
-    if (preloadedExercise) {
+    console.log('PhysioCoach useEffect triggered - preloadedExercise:', preloadedExercise);
+    console.log('sessionDataLoaded flag:', sessionDataLoadedRef.current);
+    
+    // If we've already loaded session data, don't run again
+    if (sessionDataLoadedRef.current) {
+      console.log('🚫 SKIPPING: Session data already loaded, ignoring useEffect trigger');
+      return;
+    }
+    
+    // Check for session data first - PRIORITY OVER PRELOADED EXERCISE
+    const sessionData = sessionStorage.getItem('currentSession');
+    console.log('Session data from storage:', sessionData);
+    
+    if (sessionData) {
+      console.log('🔥 SESSION DATA FOUND - IGNORING PRELOADED EXERCISE');
+      try {
+        const session = JSON.parse(sessionData);
+        console.log('Parsed session:', session);
+        
+        if (session.exercises && session.exercises.length > 0) {
+          const firstExercise = session.exercises[0];
+          console.log('First exercise:', firstExercise);
+          
+          // Check if setup is already complete from calendar page
+          if (session.setupComplete && session.exerciseSetupData) {
+            console.log('✅ TAKING PRE-GENERATED SETUP PATH');
+            console.log('Using pre-generated setup data:', session.exerciseSetupData);
+            const setupData = session.exerciseSetupData;
+            
+            // Create complete ExerciseData with prescription using pre-generated setup
+            const exerciseData: ExerciseData = {
+              exerciseName: setupData.exerciseName,
+              description: setupData.description,
+              steps: setupData.steps,
+              targetKeypoints: setupData.targetKeypoints,
+              angleCalculations: setupData.angleCalculations,
+              targetRanges: setupData.targetRanges,
+              formChecks: setupData.formChecks,
+              repThresholds: setupData.repThresholds,
+              prescription: {
+                sets: firstExercise.sets,
+                repsPerSet: firstExercise.reps,
+                restBetweenSets: firstExercise.rest_seconds,
+                reasoning: `Session exercise: ${firstExercise.sets} sets of ${firstExercise.reps} reps with ${firstExercise.rest_seconds}s rest`
+              }
+            };
+            
+            console.log('Created exerciseData with squats:', exerciseData);
+            
+            setCurrentExercise(exerciseData);
+            setIsExerciseActive(true);
+            setTargetSets(firstExercise.sets);
+            setTargetRepsPerSet(firstExercise.reps);
+            setRepCount(0);
+            repCounterRef.current = 0;
+            hasReachedPeakRef.current = false;
+            lastStateRef.current = 'ready';
+            setExerciseStarted(false);
+            setCurrentSet(1);
+            setIsRestingBetweenSets(false);
+            setRestTimer(0);
+            setExerciseComplete(false);
+            setSessionCompleted(false);
+            setLevelUpMessage(null);
+            setCurrentSessionId(null);
+            setFeedback(`Session loaded: ${firstExercise.name} (${firstExercise.sets}×${firstExercise.reps}). Click "Start Exercise" to begin.`);
+            
+            // Clear session data after loading
+            sessionStorage.removeItem('currentSession');
+            sessionDataLoadedRef.current = true; // Mark that we've loaded session data
+            console.log('Session loaded successfully, returning early');
+            return;
+          } else {
+            console.log('❌ TAKING FALLBACK API PATH - setupComplete:', session.setupComplete, 'exerciseSetupData exists:', !!session.exerciseSetupData);
+          }
+          
+          // Fallback: Use the first exercise and get proper setup from API
+          console.log('No setup data found, calling exercise-setup API as fallback');
+          setFeedback(`Loading session: ${session.day} - Setting up ${firstExercise.name}...`);
+          
+          // Call exercise setup API to get proper pose detection data
+          fetch('/api/exercise-setup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              exercise: firstExercise
+            }),
+          })
+          .then(response => response.json())
+          .then(result => {
+            if (result.success) {
+              const setupData = result.data;
+              
+              // Create complete ExerciseData with prescription
+              const exerciseData: ExerciseData = {
+                exerciseName: setupData.exerciseName,
+                description: setupData.description,
+                steps: setupData.steps,
+                targetKeypoints: setupData.targetKeypoints,
+                angleCalculations: setupData.angleCalculations,
+                targetRanges: setupData.targetRanges,
+                formChecks: setupData.formChecks,
+                repThresholds: setupData.repThresholds,
+                prescription: {
+                  sets: firstExercise.sets,
+                  repsPerSet: firstExercise.reps,
+                  restBetweenSets: firstExercise.rest_seconds,
+                  reasoning: `Session exercise: ${firstExercise.sets} sets of ${firstExercise.reps} reps with ${firstExercise.rest_seconds}s rest`
+                }
+              };
+              
+              console.log('🎯 Setting currentExercise to:', exerciseData);
+              
+              setCurrentExercise(exerciseData);
+              setIsExerciseActive(true);
+              setTargetSets(firstExercise.sets);
+              setTargetRepsPerSet(firstExercise.reps);
+              setRepCount(0);
+              repCounterRef.current = 0;
+              hasReachedPeakRef.current = false;
+              lastStateRef.current = 'ready';
+              setExerciseStarted(false);
+              setCurrentSet(1);
+              setIsRestingBetweenSets(false);
+              setRestTimer(0);
+              setExerciseComplete(false);
+              setSessionCompleted(false);
+              setLevelUpMessage(null);
+              setCurrentSessionId(null);
+              setFeedback(`Session loaded: ${firstExercise.name} (${firstExercise.sets}×${firstExercise.reps}). Click "Start Exercise" to begin.`);
+              
+              console.log('✅ Session loading complete - currentExercise should now be:', exerciseData.exerciseName);
+              
+              // Clear session data after setup is complete
+              sessionStorage.removeItem('currentSession');
+              sessionDataLoadedRef.current = true; // Mark that we've loaded session data
+              
+            } else {
+              console.error('Failed to setup exercise:', result.error);
+              setFeedback('Error setting up exercise. Please try again.');
+              // Clear session data on error too
+              sessionStorage.removeItem('currentSession');
+              sessionDataLoadedRef.current = true; // Mark as loaded even on error to prevent fallback
+            }
+          })
+          .catch(error => {
+            console.error('Error calling exercise setup API:', error);
+            setFeedback('Error loading exercise setup. Please try again.');
+            // Clear session data on error
+            sessionStorage.removeItem('currentSession');
+            sessionDataLoadedRef.current = true; // Mark as loaded even on error to prevent fallback
+          });
+          
+          return; // Don't clear session data here, wait for API response
+        }
+      } catch (error) {
+        console.error('Error parsing session data:', error);
+        sessionStorage.removeItem('currentSession');
+        sessionDataLoadedRef.current = true; // Mark as loaded to prevent fallback
+      }
+    }
+    
+    // Only use preloaded exercise if NO session data exists AND we haven't loaded session data yet
+    if (preloadedExercise && !sessionStorage.getItem('currentSession') && !sessionDataLoadedRef.current) {
       console.log('PhysioCoach: Preloaded exercise received:', preloadedExercise);
+      console.log('⚠️ WARNING: Preloaded exercise path - should not be used for sessions');
       setCurrentExercise(preloadedExercise);
       setIsExerciseActive(true);
       setRepCount(0);
@@ -319,17 +488,21 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       setRestTimer(0);
       setExerciseComplete(false);
       
-      // Generate prescription for the exercise
+      // Generate prescription for the exercise - ONLY for preloaded exercises
       if (!preloadedExercise.prescription) {
+        console.log('Preloaded exercise has no prescription, calling generateExercisePrescription');
         generateExercisePrescription(preloadedExercise);
         setFeedback(`Exercise loaded: ${preloadedExercise.exerciseName}. Generating personalized prescription...`);
       } else {
+        console.log('Preloaded exercise has prescription, using it directly');
         setTargetSets(preloadedExercise.prescription.sets);
         setTargetRepsPerSet(preloadedExercise.prescription.repsPerSet);
         setFeedback(`Exercise loaded: ${preloadedExercise.exerciseName}. Click "Start Exercise" to begin.`);
       }
+    } else if (preloadedExercise && (sessionStorage.getItem('currentSession') || sessionDataLoadedRef.current)) {
+      console.log('🚫 IGNORING preloaded exercise because session data exists or was already loaded');
     }
-  }, [preloadedExercise]);
+  }, [preloadedExercise]); // Remove sessionDataLoaded from dependencies since it's now a ref
 
   // Rest timer effect
   useEffect(() => {
