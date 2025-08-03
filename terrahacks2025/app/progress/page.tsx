@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { ProfileService, UserProfile } from '@/service/ProfileService';
+import { getCompletedSessionsCount, getCurrentStreak } from '@/service/SchedulingService';
 import Link from 'next/link';
 
 export default function ProgressPage() {
@@ -17,10 +18,11 @@ export default function ProgressPage() {
 
   // Progress data state
   const [progressData, setProgressData] = useState({
-    sessionsCompleted: 24,
-    currentStreak: 7,
-    exerciseCompletionRate: 85
+    sessionsCompleted: 0,
+    currentStreak: 0,
+    exerciseCompletionRate: 0
   });
+  const [loadingProgress, setLoadingProgress] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -44,6 +46,30 @@ export default function ProgressPage() {
           setProfileError(errorMessage);
         } finally {
           setFetchingProfile(false);
+        }
+      })();
+
+      // Load progress data
+      (async () => {
+        setLoadingProgress(true);
+        try {
+          const [completedSessions, currentStreak] = await Promise.all([
+            getCompletedSessionsCount(user.email),
+            getCurrentStreak(user.email)
+          ]);
+
+          // Calculate completion rate (placeholder for now)
+          const completionRate = completedSessions > 0 ? Math.min(Math.round((completedSessions / (completedSessions + 5)) * 100), 100) : 0;
+
+          setProgressData({
+            sessionsCompleted: completedSessions,
+            currentStreak: currentStreak,
+            exerciseCompletionRate: completionRate
+          });
+        } catch (error) {
+          console.error('Failed to load progress data:', error);
+        } finally {
+          setLoadingProgress(false);
         }
       })();
     }
@@ -75,7 +101,23 @@ export default function ProgressPage() {
     return "🔥 Start your streak today!";
   };
 
-  if (loading || fetchingProfile) {
+  const getLevelName = (level: number) => {
+    if (level >= 20) return "Master Therapist";
+    if (level >= 15) return "Expert";
+    if (level >= 10) return "Advanced";
+    if (level >= 5) return "Intermediate";
+    return "Beginner";
+  };
+
+  const calculateProgressToNextLevel = (currentXP: number, currentLevel: number) => {
+    const currentLevelXP = ProfileService.calculateXPForCurrentLevel(currentLevel);
+    const nextLevelXP = ProfileService.calculateXPForNextLevel(currentLevel);
+    const progressXP = currentXP - currentLevelXP;
+    const requiredXP = nextLevelXP - currentLevelXP;
+    return Math.min((progressXP / requiredXP) * 100, 100);
+  };
+
+  if (loading || fetchingProfile || loadingProgress) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -188,7 +230,31 @@ export default function ProgressPage() {
           </div>
 
           {/* Progress Overview Cards */}
-          <div className="grid md:grid-cols-2 gap-6 mb-12">
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {/* Level Progress */}
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-400/10 to-indigo-500/10 rounded-full -translate-y-12 translate-x-12"></div>
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-4">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+                  </svg>
+                </div>
+                <h4 className="text-2xl font-bold text-black mb-2">Level {profile?.level || 1}</h4>
+                <p className="text-black/70 text-sm mb-2">{getLevelName(profile?.level || 1)}</p>
+                <p className="text-xs text-purple-600 font-medium">{profile?.experience_points || 0} XP</p>
+                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${calculateProgressToNextLevel(profile?.experience_points || 0, profile?.level || 1)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-black/50 mt-1">
+                  {ProfileService.calculateXPForNextLevel(profile?.level || 1) - (profile?.experience_points || 0)} XP to next level
+                </p>
+              </div>
+            </div>
+
             {/* Sessions Completed */}
             <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-12 translate-x-12"></div>
@@ -229,10 +295,6 @@ export default function ProgressPage() {
                 <p className="text-xs text-black/50 mt-1">Next milestone: 10 days</p>
               </div>
             </div>
-
-
-
-
           </div>
 
           {/* Progress Charts Section */}

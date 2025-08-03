@@ -229,7 +229,11 @@ export default function CalendarPage() {
 
           {/* Calendar Component */}
           <div className="animate-fade-in-up-delayed">
-            <Calendar userSessions={userSessions} medicalConditions={medicalConditions} />
+            <Calendar 
+              userSessions={userSessions} 
+              medicalConditions={medicalConditions} 
+              userEmail={user.email}
+            />
           </div>
 
 

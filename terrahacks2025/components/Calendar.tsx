@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { completeSession } from '@/service/SchedulingService';
 
 interface Exercise {
   id: string;
@@ -52,9 +53,10 @@ interface MedicalCondition {
 interface CalendarProps {
   userSessions?: PhysioSession[];
   medicalConditions?: MedicalCondition[];
+  userEmail?: string;
 }
 
-export default function Calendar({ userSessions = [], medicalConditions = [] }: CalendarProps) {
+export default function Calendar({ userSessions = [], medicalConditions = [], userEmail }: CalendarProps) {
   // Set current date to the earliest session date, or today if no sessions
   const getInitialDate = () => {
     if (userSessions.length === 0) return new Date();
@@ -198,15 +200,52 @@ export default function Calendar({ userSessions = [], medicalConditions = [] }: 
     setShowExerciseModal(true);
   };
 
-  const handleMarkComplete = (dayData: DayData) => {
+  const handleMarkComplete = async (dayData: DayData) => {
+    if (!userEmail) {
+      console.error('User email not provided to Calendar component');
+      return;
+    }
+
     const dayKey = dayData.date.toISOString().split('T')[0];
-    setCompletedDays(prev => {
-      const newSet = new Set(prev);
-      newSet.add(dayKey);
-      return newSet;
-    });
-    // Update the selected day data to reflect completion
-    setSelectedDayData(prev => prev ? { ...prev, completed: true } : null);
+    
+    try {
+      // Find sessions for this day and complete them
+      const sessionsForDay = userSessions.filter(session => {
+        const sessionDate = new Date(session.date_of_session);
+        return sessionDate.toISOString().split('T')[0] === dayKey && !session.is_complete;
+      });
+
+      // Complete each session for this day
+      const completionPromises = sessionsForDay.map(session => 
+        completeSession(session.id, userEmail)
+      );
+
+      const results = await Promise.all(completionPromises);
+      
+      // Check if any resulted in level up
+      const levelUps = results.filter(result => result.leveledUp);
+      if (levelUps.length > 0) {
+        const highestLevel = Math.max(...levelUps.map(result => result.newLevel));
+        alert(`🎉 Congratulations! You've reached Level ${highestLevel}!`);
+      } else if (results.length > 0) {
+        const totalXP = results.reduce((sum, result) => sum + 50, 0); // 50 XP per session
+        alert(`+${totalXP} XP earned! Great job completing your therapy sessions!`);
+      }
+
+      // Update UI
+      setCompletedDays(prev => {
+        const newSet = new Set(prev);
+        newSet.add(dayKey);
+        return newSet;
+      });
+      
+      // Update the selected day data to reflect completion
+      setSelectedDayData(prev => prev ? { ...prev, completed: true } : null);
+      
+    } catch (error) {
+      console.error('Error completing sessions:', error);
+      alert('Failed to complete sessions. Please try again.');
+    }
   };
 
   const handlePreviousMonth = () => {

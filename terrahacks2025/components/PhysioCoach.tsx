@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
+import { useAuth } from '@/hooks/useAuth';
 
 // Declare MediaPipe global types
 declare global {
@@ -164,6 +165,7 @@ function YouTubeDemo({ exerciseName, isVisible }: { exerciseName: string; isVisi
 }
 
 export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachProps = {}) {
+  const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const repCounterRef = useRef(0);
@@ -194,6 +196,12 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
   const [restTimer, setRestTimer] = useState(0);
   const [exerciseComplete, setExerciseComplete] = useState(false);
   const [isGeneratingPrescription, setIsGeneratingPrescription] = useState(false);
+
+  // Session completion state
+  const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [levelUpMessage, setLevelUpMessage] = useState<string | null>(null);
+  const [completingSession, setCompletingSession] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
 
   // Set MediaPipe as loaded when both scripts are loaded
   useEffect(() => {
@@ -256,6 +264,42 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       setTargetRepsPerSet(10);
     } finally {
       setIsGeneratingPrescription(false);
+    }
+  };
+
+  // Function to complete session and award XP
+  const completeSessionWithXP = async () => {
+    if (!user?.email || sessionCompleted || completingSession || !currentSessionId) return;
+    
+    setCompletingSession(true);
+    try {
+      const response = await fetch('/api/complete-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: currentSessionId,
+          userEmail: user.email
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setSessionCompleted(true);
+        setLevelUpMessage(result.data.message);
+        
+        // Show level up message for 5 seconds
+        setTimeout(() => {
+          setLevelUpMessage(null);
+        }, 5000);
+      } else {
+        console.error('Failed to complete session');
+      }
+    } catch (error) {
+      console.error('Error completing session:', error);
+    } finally {
+      setCompletingSession(false);
     }
   };
 
@@ -353,10 +397,33 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
   };
 
   // Reset rep counter when starting exercise
-  const handleStartExercise = () => {
-    setExerciseStarted(!exerciseStarted);
+  const handleStartExercise = async () => {
     if (!exerciseStarted) {
-      // Starting exercise - reset all counters
+      // Starting exercise - create a session and reset all counters
+      if (user?.email) {
+        try {
+          // For now, we'll use a mock condition ID = 1 (this should be improved)
+          const response = await fetch('/api/create-session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              conditionId: 1, // Mock condition ID - should come from the actual medical condition
+              userEmail: user.email
+            }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            setCurrentSessionId(result.data.sessionId);
+          }
+        } catch (error) {
+          console.error('Error creating session:', error);
+        }
+      }
+
+      setExerciseStarted(true);
       setRepCount(0);
       repCounterRef.current = 0;
       hasReachedPeakRef.current = false;
@@ -366,11 +433,15 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
       setIsRestingBetweenSets(false);
       setRestTimer(0);
       setExerciseComplete(false);
+      setSessionCompleted(false);
+      setLevelUpMessage(null);
       setFeedback(`Exercise started! Set ${currentSet}/${targetSets} - ${targetRepsPerSet} reps`);
     } else {
       // Stopping exercise
+      setExerciseStarted(false);
       setIsRestingBetweenSets(false);
       setRestTimer(0);
+      setCurrentSessionId(null);
       setFeedback('Exercise stopped');
     }
   };
@@ -844,6 +915,9 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
             setExerciseComplete(true);
             setExerciseStarted(false);
             setFeedback('🎉 Congratulations! Exercise completed successfully!');
+            
+            // Complete session and award XP
+            completeSessionWithXP();
           } else {
             // Start rest period between sets
             const restTime = currentExercise?.prescription?.restBetweenSets || 60;
@@ -1046,8 +1120,20 @@ export default function PhysiotherapyCoach({ preloadedExercise }: PhysioCoachPro
 
       {/* User Profile Form Modal */}
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
+        {/* Level Up Notification */}
+        {levelUpMessage && (
+          <div className="fixed top-4 right-4 z-50 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-6 py-4 rounded-2xl shadow-2xl border border-white/20 animate-bounce">
+            <div className="flex items-center space-x-3">
+              <span className="text-2xl">🎉</span>
+              <div>
+                <p className="font-bold text-lg">Level Up!</p>
+                <p className="text-sm opacity-90">{levelUpMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="max-w-6xl mx-auto">{/* Header */}
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               AI Physiotherapy Coach
