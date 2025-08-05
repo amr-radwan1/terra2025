@@ -136,44 +136,10 @@ terrahacks2025/
 - **Healthcare Professionals** seeking digital therapy tools
 - **Fitness Enthusiasts** wanting professional exercise guidance
 
-## 🔒 Security & Privacy
-
-- End-to-end encryption for sensitive health data
-- HIPAA-compliant data handling practices
-- Secure authentication with Supabase
-- Privacy-first approach to user data
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-```bash
-npm run build
-vercel --prod
-```
-
-### Other Platforms
-The application is containerized and can be deployed on any platform supporting Node.js applications.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🏆 TerraHacks 2025
 
 Built with ❤️ for TerraHacks 2025 - Empowering healthcare through technology.
 
-## 📞 Support
 
-For support, email support@freesio.com or create an issue in this repository.
-
----
-
-**Made with 💪 by the Freesio Team** | [Live Demo](https://freesio-therapist.vercel.app)
+**Made with 💪 by the Freesio Team** | [Live Demo](https://freesiotherapist.vercel.app)
