@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
   3. FORWARD ARM RAISE (shoulder flexion):
      - points=[23, 11, 13] (Hip → Shoulder → Elbow)
      - startingPosition=[0,30] (arm at side)
-     - targetRange=[90,180] (horizontal to up)
+     - targetRange=[90,160] (horizontal to up)
      - optimalPeak=[140,160] (nearly overhead)
      - repThresholds: liftingMin=90, loweringMax=60, rest=30
 
